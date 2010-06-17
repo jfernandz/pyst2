@@ -161,6 +161,7 @@ class Event(object):
 class Manager(object):
     def __init__(self):
         self._sock = None     # our socket
+        self.title = None     # set by received greeting
         self._connected = threading.Event()
         self._running = threading.Event()
         
@@ -308,7 +309,7 @@ class Manager(object):
                             break
 
                         # check to see if this is the greeting line    
-                        if line.find('/') >= 0 and line.find(':') < 0:
+                        if not self.title and line.find('/') >= 0 and line.find(':') < 0:
                             self.title = line.split('/')[0].strip() # store the title of the manager we are connecting to
                             self.version = line.split('/')[1].strip() # store the version of the manager we are connecting to
                             break
