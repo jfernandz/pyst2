@@ -1,0 +1,78 @@
+2006-11-28  Matthew Nicholson  <mnicholson@digium.com>
+
+	* UPGRADE: Tweaked formatting.
+
+2006-10-30  Matthew Nicholson  <mnicholson@digium.com>
+
+	* ChangeLog: Fixed previous entry.
+
+2006-10-30  Matthew Nicholson  <mnicholson@digium.com>
+
+	* TODO: Updated.
+	* asterisk/agi.py (AGI.control_stream_file): Changed default skipms
+	and quoted arguments.
+
+2006-10-24  Matthew Nicholson  <mnicholson@digium.com>
+	
+	* asterisk/agi.py: Added get_variable_full command.
+
+2006-10-18  Matthew Nicholson  <mnicholson@digium.com>
+
+	* asterisk/agitb.py: Make error output default to sys.stderr instead
+	of sys.stdout.
+	
+2006-09-19  Matthew Nicholson  <mnicholson@digium.com>
+
+	* debian/control: Removed XS-Python-Versions header to make it default
+	to all python versions.
+
+2006-09-19  Matthew Nicholson  <mnicholson@digium.com>
+
+	* setup.py: Updated version.
+
+2006-09-19  Matthew Nicholson  <mnicholson@digium.com>
+
+	* debian/rules: Changed to use pysupport.
+	* debian/control: Changed to use pysupport and changed arch to all.
+
+2006-09-19  Matthew Nicholson  <mnicholson@digium.com>
+
+	* MANIFEST.in: Added NEWS to manifest.
+
+2006-09-19  Matthew Nicholson  <mnicholson@digium.com>
+
+	* debian/rules: Updated to reflect new python policy.
+	* debian/control: Updated to reflect new python policy.
+	* debian/changelog: Updated.
+
+2006-08-23  Matthew Nicholson  <mnicholson@digium.com>
+
+	* UPGRADE: Updated.
+
+2006-08-23  Matthew Nicholson  <mnicholson@digium.com>
+
+	* asterisk/manager.py (unregister_event): Added.
+
+2006-08-23  Matthew Nicholson  <mnicholson@digium.com>
+
+	* NEWS: Added.
+
+2006-07-14  Matthew Nicholson  <mnicholson@digium.com>
+
+	* asterisk/agi.py (wait_for_digit): Only catch ValueError, not all
+	exceptions.
+
+2006-07-14  Matthew Nicholson  <mnicholson@digium.com>
+
+	* TODO: Updated.
+	* asterisk/agi.py (set_variable): Documentation changes.
+	* asterisk/agi.py (get_variable): Changed to return and empty string
+	instead of throwing an exception when a channel variable is not set.
+	* UPGRADE: Added.
+
+2006-07-14  Matthew Nicholson  <mnicholson@digium.com>
+
+	* ChangeLog: Added.
+	* TODO: Added.
+	* MANIFEST.in: Added ChangeLog and TODO.
+

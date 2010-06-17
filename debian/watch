@@ -1,0 +1,3 @@
+# Site		Directory		Pattern			Version	Script
+version=2
+http://ftp1.sourceforge.net/pyst/pyst-(.*)\.tar\.gz	debian	uupdate

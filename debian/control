@@ -1,0 +1,21 @@
+Source: pyst
+Section: python
+Priority: optional
+Maintainer: Matthew Nicholson <mnicholson@digium.com>
+Build-Depends-Indep: debhelper (>= 5.0.37.2), cdbs (>= 0.4.43), python-all-dev (>= 2.3.5-11), python-support (>= 0.3)
+Standards-Version: 3.6.1
+
+Package: python-pyst
+Architecture: all
+Depends: ${python:Depends}
+Provides: ${python:Provides}
+Replaces: python2.3-pyst (<< 0.2)
+Conflicts: python2.3-pyst (<< 0.2)
+XB-Python-Version: ${python:Versions}
+Suggests: asterisk
+Description: Python module for interacting with the Asterisk PBX (dummy)
+ Pyst is a python module for interacting with the asterisk pbx through
+ the manager interface and agi interface.  This package also includes
+ debugging tools such as the agitb module, and tools to parse asterisk
+ config files.
+
