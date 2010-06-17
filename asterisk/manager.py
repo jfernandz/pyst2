@@ -495,7 +495,7 @@ class Manager(object):
         return response
 
     def hangup(self, channel):
-        """Hanup the specfied channel"""
+        """Hangup the specified channel"""
     
         cdict = {'Action':'Hangup'}
         cdict['Channel'] = channel
@@ -572,6 +572,15 @@ class Manager(object):
         cdict['Context'] = context
         response = self.send_action(cdict)
         
+        return response
+
+    def playdtmf (self, channel, digit) :
+        """Plays a dtmf digit on the specified channel"""
+        cdict = {'Action':'PlayDTMF'}
+        cdict['Channel'] = channel
+        cdict['Digit'] = digit
+        response = self.send_action(cdict)
+
         return response
 
     def absolute_timeout(self, channel, timeout):
