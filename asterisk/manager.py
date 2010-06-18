@@ -81,33 +81,21 @@ class ManagerMsg(object):
 
     def parse(self, response):
         """Parse a manager message"""
-        response.seek(0)
 
         data = []
-
-        # read the response line by line
-        for line in response.readlines():
-            line = line.rstrip()  # strip trailing whitespace
-
-            if not line: continue  # don't process if this is not a message
-
-            # locate the ':' in our message, if there is one
-            if line.find(':') > -1:
-                item = [x.strip() for x in line.split(':',1)]
-
-                # if this is a header
-                if len(item) == 2:
-                    # store the header
-                    self.headers[item[0]] = item[1]
-                # otherwise it is just plain data
-                else:
-                    data.append(line)
-            # if there was no ':', then we have data
-            else:
-                data.append(line)
-
-        # store the data
-        self.data = '%s\n' % '\n'.join(data)
+        for n, line in enumerate (response):
+            # all valid header lines end in \r\n
+            if not line.endswith ('\r\n'):
+                data.extend(response[n:])
+                break
+            try:
+                k, v = (x.strip() for x in line.split(':',1))
+                self.headers[k] = v
+            except ValueError:
+                # invalid header, start of multi-line data response
+                data.extend(response[n:])
+                break
+        self.data = ''.join(data)
 
     def has_header(self, hname):
         """Check for a header"""
@@ -248,9 +236,10 @@ class Manager(object):
         clist.append(EOL)
         command = EOL.join(clist)
 
-        # lock the soket and send our command
+        # lock the socket and send our command
         try:
-            self._sock.sendall(command)
+            self._sock.write(command)
+            self._sock.flush()
         except socket.error, (errno, reason):
             raise ManagerSocketException(errno, reason)
         
@@ -268,65 +257,52 @@ class Manager(object):
         Read the response from a command.
         """
 
+        multiline = False
         # loop while we are sill running and connected
         while self._running.isSet() and self._connected.isSet():
-
-            lines = []
             try:
-                try:
-                    # if there is data to be read
-                    # read a message
-                    while self._connected.isSet():
-                        line = []
-     
-                        # read a line, one char at a time 
-                        while self._connected.isSet():
-                            c = self._sock.recv(1)
-
-                            if not c:  # the other end closed the connection
-                                self._sock.close()
-                                self._connected.clear()
-                                break
-                            
-                            line.append(c)  # append the character to our line
-
-                            # is this the end of a line?
-                            if c == '\n':
-                                line = ''.join(line)
-                                break
-
-                        # if we are no longer connected we probably did not
-                        # recieve a full message, don't try to handle it
-                        if not self._connected.isSet(): break
-
-                        # make sure our line is a string
-                        assert type(line) in StringTypes
-
-                        lines.append(line) # add the line to our message
-
-                        # if the line is our EOL marker we have a complete message
-                        if line == EOL:
+                lines = []
+                for line in self._sock :
+                    # check to see if this is the greeting line    
+                    if not self.title and '/' in line and not ':' in line:
+                        # store the title of the manager we are connecting to:
+                        self.title = line.split('/')[0].strip()
+                        # store the version of the manager we are connecting to:
+                        self.version = line.split('/')[1].strip()
+                        # fake message header
+                        lines.append ('Response: Generated Header\r')
+                        lines.append (line)
+                        break
+                    # if the line is EOL marker we have a complete message
+                    if line == EOL and not multiline:
+                        if lines or not self._connected.isSet():
                             break
-
-                        # check to see if this is the greeting line    
-                        if not self.title and line.find('/') >= 0 and line.find(':') < 0:
-                            self.title = line.split('/')[0].strip() # store the title of the manager we are connecting to
-                            self.version = line.split('/')[1].strip() # store the version of the manager we are connecting to
-                            break
-
-                        #sleep(.001)  # waste some time before reading another line
-
-                except socket.error:
+                        # ignore empty lines at start
+                        continue
+                    lines.append(line)
+                    # line not ending in \r\n or without ':' isn't a
+                    # valid header and starts multiline response
+                    if not line.endswith('\r\n') or ':' not in line:
+                        multiline = True
+                    # same when seeing end of multiline response
+                    if multiline and line.startswith('--END COMMAND--'):
+                        multiline = False
+                    if not self._connected.isSet():
+                        break
+                else:
+                    # EOF during reading
                     self._sock.close()
                     self._connected.clear()
-                    break
-
-            finally:
                 # if we have a message append it to our queue
                 if lines and self._connected.isSet():
-                    self._message_queue.put(StringIO(''.join(lines)))
+                    self._message_queue.put(lines)
                 else:
                     self._message_queue.put(None)
+            except socket.error:
+                self._sock.close()
+                self._connected.clear()
+                self._message_queue.put(None)
+
     
     def register_event(self, event, function):
         """
@@ -393,7 +369,7 @@ class Manager(object):
                             
 
     def event_dispatch(self):
-        """This thread is responsible fore dispatching events"""
+        """This thread is responsible for dispatching events"""
 
         # loop dispatching events
         while self._running.isSet():
@@ -428,8 +404,10 @@ class Manager(object):
 
         # create our socket and connect
         try:
-            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.connect((host,port))
+            _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            _sock.connect((host,port))
+            self._sock = _sock.makefile ()
+            _sock.close ()
         except socket.error, (errno, reason):
             raise ManagerSocketException(errno, reason)
 
