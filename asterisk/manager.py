@@ -66,19 +66,35 @@ EOL = '\r\n'
 class ManagerMsg(object): 
     """A manager interface message"""
     def __init__(self, response):
-        self.response = response  # the raw response, straight from the horse's mouth
+        # the raw response, straight from the horse's mouth:
+        self.response = response
         self.data = ''
         self.headers = {}
         
         # parse the response
         self.parse(response)
-        
-        if not self.headers:
-            # Bad app not returning any headers.  Let's fake it
-            # this could also be the inital greeting
-            self.headers['Response'] = 'Generated Header'
-            #            'Response:'
 
+        # This is an unknown message, may happen if a command (notably
+        # 'dialplan show something') contains a \n\r\n sequence in the
+        # middle of output. We hope this happens only *once* during a
+        # misbehaved command *and* the command ends with --END COMMAND--
+        # in that case we return an Event.  Otherwise we asume it is
+        # from a misbehaving command not returning a proper header (e.g.
+        # IAXnetstats in Asterisk 1.4.X)
+        # A better solution is probably to retain some knowledge of
+        # commands sent and their expected return syntax. In that case
+        # we could wait for --END COMMAND-- for 'command'.
+        # B0rken in asterisk. This should be parseable without context.
+        if 'Event' not in self.headers and 'Response' not in self.headers:
+            # there are commands that return the ActionID but not
+            # 'Response', e.g., IAXpeers in Asterisk 1.4.X
+            if self.has_header('ActionID'):
+                self.headers['Response'] = 'Generated Header'
+            elif '--END COMMAND--' in self.data:
+                self.headers['Event'] = 'NoClue'
+            else:
+                self.headers['Response'] = 'Generated Header'
+        
     def parse(self, response):
         """Parse a manager message"""
 
@@ -258,6 +274,8 @@ class Manager(object):
         """
 
         multiline = False
+        wait_for_marker = False
+        eolcount = 0
         # loop while we are sill running and connected
         while self._running.isSet() and self._connected.isSet():
             try:
@@ -270,11 +288,17 @@ class Manager(object):
                         # store the version of the manager we are connecting to:
                         self.version = line.split('/')[1].strip()
                         # fake message header
-                        lines.append ('Response: Generated Header\r')
+                        lines.append ('Response: Generated Header\r\n')
                         lines.append (line)
                         break
-                    # if the line is EOL marker we have a complete message
-                    if line == EOL and not multiline:
+                    # If the line is EOL marker we have a complete message.
+                    # Some commands are broken and contain a \n\r\n
+                    # sequence, in the case wait_for_marker is set, we
+                    # have such a command where the data ends with the
+                    # marker --END COMMAND--, so we ignore embedded
+                    # newlines until we see that marker
+                    if line == EOL and not wait_for_marker :
+                        multiline = False
                         if lines or not self._connected.isSet():
                             break
                         # ignore empty lines at start
@@ -284,8 +308,14 @@ class Manager(object):
                     # valid header and starts multiline response
                     if not line.endswith('\r\n') or ':' not in line:
                         multiline = True
+                    # Response: Follows indicates we should wait for end
+                    # marker --END COMMAND--
+                    if not multiline and line.startswith('Response') and \
+                        line.split(':', 1)[1].strip() == 'Follows':
+                        wait_for_marker = True
                     # same when seeing end of multiline response
                     if multiline and line.startswith('--END COMMAND--'):
+                        wait_for_marker = False
                         multiline = False
                     if not self._connected.isSet():
                         break
@@ -360,7 +390,6 @@ class Manager(object):
                 # check if this is a response
                 elif message.has_header('Response'):
                     self._response_queue.put(message)
-                # this is an unknown message
                 else:
                     print 'No clue what we got\n%s' % message.data
         finally:
