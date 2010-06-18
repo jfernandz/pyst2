@@ -445,6 +445,7 @@ class Manager(object):
             
         self._running.clear()
 
+# Manager actions
 
     def login(self, username, secret):
         """Login to the manager, throws ManagerAuthException when login falis"""
@@ -578,6 +579,18 @@ class Manager(object):
         response = self.send_action(cdict)
 
         return response
+
+    def sippeers(self):
+        cdict = {'Action' : 'Sippeers'}
+        response = self.send_action(cdict)
+        return response
+
+    def sipshowpeer(self, peer):
+        cdict = {'Action' : 'SIPshowpeer'}
+        cdict['Peer'] = peer
+        response = self.send_action(cdict)
+        return response
+
 
 class ManagerException(Exception): pass
 class ManagerSocketException(ManagerException): pass
