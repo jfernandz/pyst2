@@ -1,0 +1,82 @@
+.. image:: http://sflogo.sourceforge.net/sflogo.php?group_id=134329&type=7
+    :height: 62
+    :width: 210
+    :alt: SourceForge.net Logo
+    :target: http://sourceforge.net
+
+pyst: A Python Interface to Asterisk
+====================================
+
+Pyst consists of a set of interfaces and libraries to allow programming of
+Asterisk from python. The library currently supports AGI, AMI, and the parsing
+of Asterisk configuration files. The library also includes debugging facilities
+for AGI.
+
+Installation is the standard python install::
+
+ tar xvf pyst.tar.gz
+ cd pyst
+ python setup.py install --prefix=/usr/local
+
+Documentation is currently only in python docstrings, you can use
+pythons built-in help facility::
+
+ import asterisk
+ help (asterisk)
+ import asterisk.agi
+ help (asterisk.agi)
+ import asterisk.manager
+ help (asterisk.manager)
+ import asterisk.config
+ help (asterisk.config)
+
+
+Things to do for pyst
+---------------------
+
+* ChangeLog:
+  The ChangeLog needs to be updated from the monotone logs.
+
+* Documentation:
+  All of pyst's inline documentation needs to be updated.
+
+* manager.py:
+  This should be convereted to be single threaded.  Also there is a race
+  condition when a user calls manager.logoff() followed by
+  manager.close().  The close() function may still call logoff again if
+  the socket thread has not yet cleared the _connected flag.
+
+  A class should be made for each manager action rather than having a
+  function in a manager class.  The manager class should be adapted to
+  have a send method that know the general format of the classes.
+
+Upgrading from older versions
+-----------------------------
+
+If upgrading from...
+
+* 0.2: Should work out of the box
+
+* 0.1.0:
+
+   - agi.get_variable no longer throws an exception, instead it returns an
+     empty string when a channel variable is not set.
+   - manager.quit() has be renamed to manager.close()
+
+Changes
+-------
+
+Version 0.3: Minor feature enhancements
+
+The parsing of answers from asterisk was completely rewritten. This
+should fix problems people were having with commands returning embedded
+'/' or empty lines.
+
+ - Add playdtmf manager command
+ - rewritten manager communication
+ - should no longer choke on '/' in answers returned from a manager
+   command (fixes SF Bug 2947866)
+ - should now correctly parse multi-line output with embedded empty
+   lines
+
+See the ChangeLog for older changes.
