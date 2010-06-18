@@ -383,8 +383,8 @@ class Manager(object):
             # dispatch our events
 
             # first build a list of the functions to execute
-            callbacks = self._event_callbacks.get(ev.name, [])
-            callbacks.extend(self._event_callbacks.get('*', []))
+            callbacks = (self._event_callbacks.get(ev.name, [])
+                      +  self._event_callbacks.get('*', []))
 
             # now execute the functions  
             for callback in callbacks:
