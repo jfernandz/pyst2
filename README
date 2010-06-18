@@ -63,6 +63,33 @@ control tool (currently svn).
   function in a manager class.  The manager class should be adapted to
   have a send method that know the general format of the classes.
 
+Matthew Nicholson writes on the mailinglist (note that I'm not sure I'll do
+this, I'm currently satisfied with the threaded implementation):
+
+    For pyst 0.3 I am planning to clean up the manager.py.  There are
+    several know issues with the code.  No one has actually reported these
+    as problems, but I have personally had trouble with these.  Currently
+    manager.py runs in several threads, the main program thread, a thread to
+    read from the network, and an event distribution thread.  This causes
+    problems with non thread safe code such as the MySQLdb libraries.  This
+    design also causes problems when an event handler throws an exception
+    that causes the event processing thread to terminate.
+
+    The second problem is with the way actions are sent.  Each action has a
+    specific function associated with it in the manager object that takes
+    all possible arguments that may ever be passed to that action.  This
+    makes the api somewhat rigid and the Manager object cluttered.
+
+    To solve these problems I am basically going to copy the design of my
+    Astxx manager library (written in c++) and make it more python like.
+    Each action will be a different object with certain methods to handle
+    various tasks, with one function in the actual Manager class to send the
+    action.  This will make the Manager class much smaller and much more
+    flexible.  The current code will be consolidated into a single threaded
+    design with hooks to have the library process events and such.  These
+    hooks will be called from the host application's main loop.
+
+
 Upgrading from older versions
 -----------------------------
 
