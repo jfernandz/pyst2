@@ -27,6 +27,8 @@ setup \
     , long_description = ''.join (description)
     , author = 'Karl Putland'
     , author_email = 'kputland@users.sourceforge.net'
+    , maintainer = 'Ralf Schlatterbeck'
+    , maintainer_email = 'rsc@runtux.com'
     , url = 'http://www.sourceforge.net/projects/pyst/'
     , packages = ['asterisk']
     , license = ', '.join (licenses)

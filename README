@@ -30,9 +30,22 @@ pythons built-in help facility::
  import asterisk.config
  help (asterisk.config)
 
+Credits
+-------
+
+Thanks to Karl Putland for writing the original package. 
+Thanks to Matthew Nicholson for maintaining the package for some years
+and for handing over maintenance when he was no longer interested.
 
 Things to do for pyst
 ---------------------
+
+This is the original changelog merged into the readme file. I'm not so
+sure I really want to change all these things (in particular the
+threaded implementation looks good to me). I will maintain a section
+summarizing the changes in this README, the ChangeLog won't be
+maintained any longer. Detailed changes will be available in the version
+control tool (currently svn).
 
 * ChangeLog:
   The ChangeLog needs to be updated from the monotone logs.
