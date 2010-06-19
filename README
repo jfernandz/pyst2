@@ -110,13 +110,16 @@ Version 0.3: Minor feature enhancements
 
 The parsing of answers from asterisk was completely rewritten. This
 should fix problems people were having with commands returning embedded
-'/' or empty lines.
+'/' or empty lines. Some new manager commands added.
 
  - Add playdtmf manager command
+ - add sippeers and sipshowpeer manager commands
  - rewritten manager communication
  - should no longer choke on '/' in answers returned from a manager
    command (fixes SF Bug 2947866)
  - should now correctly parse multi-line output with embedded empty
-   lines
+   lines, e.g. ``mgr.command('dialplan show')``
+ - Bug-fix for list manipulation in ``event_dispatch``, thanks to Jan
+   Müller, see mailinglist comment from 2008-04-18
 
 See the ChangeLog for older changes.
