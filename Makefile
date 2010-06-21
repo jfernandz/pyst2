@@ -1,3 +1,4 @@
+CDUP=../..
 PKG=asterisk
 PY=agi.py  agitb.py  config.py  __init__.py  manager.py
 SRC=Makefile MANIFEST.in setup.py README README.html \
