@@ -30,6 +30,13 @@ pythons built-in help facility::
  import asterisk.config
  help (asterisk.config)
 
+Some notes on platforms: We now specify "platforms = 'Any'" in
+``setup.py``. This means, the manager part of the package will probably
+run on any platform. The agi scripts on the other hand are called
+directly on the host where Asterisk is running. Since Asterisk doesn't
+run on windows platforms (and probably never will) the agi part of the
+package can only be run on Asterisk platforms.
+
 Credits
 -------
 

@@ -16,9 +16,10 @@ for line in f :
     logo_stripped = True
     description.append (line)
 
-licenses = ( 'Python Software Foundation License (agitb)'
+licenses = ( 'Python Software Foundation License'
            , 'GNU Library or Lesser General Public License (LGPL)'
            )
+
 
 setup \
     ( name = 'pyst'
@@ -32,5 +33,20 @@ setup \
     , url = 'http://www.sourceforge.net/projects/pyst/'
     , packages = ['asterisk']
     , license = ', '.join (licenses)
-    , platforms = 'UNIX'
+    , platforms = 'Any'
+    , classifiers =
+        [ 'Development Status :: 5 - Production/Stable'
+        , 'Environment :: Other Environment'
+        , 'Intended Audience :: Developers'
+        , 'Intended Audience :: Telecommunications Industry'
+        , 'Operating System :: OS Independent'
+        , 'Programming Language :: Python'
+        , 'Programming Language :: Python :: 2.4'
+        , 'Programming Language :: Python :: 2.5'
+        , 'Programming Language :: Python :: 2.6'
+        , 'Programming Language :: Python :: 2.7'
+        , 'Topic :: Communications :: Internet Phone'
+        , 'Topic :: Communications :: Telephony'
+        , 'Topic :: Software Development :: Libraries :: Python Modules'
+        ] + ['License :: OSI Approved :: ' + l for l in licenses]
     )
