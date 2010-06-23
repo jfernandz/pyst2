@@ -117,9 +117,9 @@ class ManagerMsg(object):
         """Check for a header"""
         return self.headers.has_key(hname)
 
-    def get_header(self, hname):
+    def get_header(self, hname, defval = None):
         """Return the specfied header"""
-        return self.headers[hname]
+        return self.headers.get(hname, defval)
 
     def __getitem__(self, hname):
         """Return the specfied header"""
@@ -148,9 +148,9 @@ class Event(object):
         """Check for a header"""
         return self.headers.has_key(hname)
 
-    def get_header(self, hname):
+    def get_header(self, hname, defval = None):
         """Return the specfied header"""
-        return self.headers[hname]
+        return self.headers.get(hname, defval)
     
     def __getitem__(self, hname):
         """Return the specfied header"""

@@ -95,19 +95,28 @@ Upgrading from older versions
 
 If upgrading from...
 
-* 0.2: Should work out of the box
+* 0.2:
+
+   - ``get_header()`` methods in ``manager.py`` now work like
+     ``dict.get()`` instead of ``dict[key]``
+
 
 * 0.1.0:
 
-   - agi.get_variable no longer throws an exception, instead it returns an
-     empty string when a channel variable is not set.
-   - manager.quit() has be renamed to manager.close()
+   - ``agi.get_variable`` no longer throws an exception, instead it
+     returns an empty string when a channel variable is not set.
+   - ``manager.quit()`` has be renamed to ``manager.close()``
 
 Changes
 -------
 
 Version 0.3: Minor feature enhancements
 
+New maintainer Ralf Schlatterbeck, this is my first release, please
+report any problems via the Sourceforge Bug-Tracker or email me
+directly. Thanks to Karl Putland for writing the original package. 
+Thanks to Matthew Nicholson for maintaining the package for some years
+and for handing over maintenance when he was no longer interested.
 The parsing of answers from asterisk was completely rewritten. This
 should fix problems people were having with commands returning embedded
 '/' or empty lines. Some new manager commands added.
@@ -121,5 +130,11 @@ should fix problems people were having with commands returning embedded
    lines, e.g. ``mgr.command('dialplan show')``
  - Bug-fix for list manipulation in ``event_dispatch``, thanks to Jan
    Müller, see mailinglist comment from 2008-04-18
+ - Merge unreleased changes from repository of Matthew Nicholson
+   in particular a typo in ``agi.py`` for ``set_autohangup``, and change
+   of ``get_header`` methods (see Upgrading instructions). The fixed
+   ``manager.command`` support is already in (with a different
+   solution). The unreleased changes are also on the 0.2 branch in the
+   subversion repository in case somebody is interested.
 
 See the ChangeLog for older changes.
