@@ -129,7 +129,7 @@ should fix problems people were having with commands returning embedded
  - should now correctly parse multi-line output with embedded empty
    lines, e.g. ``mgr.command('dialplan show')``
  - Bug-fix for list manipulation in ``event_dispatch``, thanks to Jan
-   Müller, see mailinglist comment from 2008-04-18
+   Mueller, see mailinglist comment from 2008-04-18
  - Merge unreleased changes from repository of Matthew Nicholson
    in particular a typo in ``agi.py`` for ``set_autohangup``, and change
    of ``get_header`` methods (see Upgrading instructions). The fixed
