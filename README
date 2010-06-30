@@ -114,6 +114,35 @@ If upgrading from...
      returns an empty string when a channel variable is not set.
    - ``manager.quit()`` has be renamed to ``manager.close()``
 
+Source Code Repository Access
+-----------------------------
+
+The current versions are kept in a Subversion repository on Sourceforge.
+You can check out the trunk with::
+
+    svn co https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/trunk pyst
+
+There is also a 0.2 branch in::
+
+    https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/branches/0.2
+
+which contains unreleased changes after 0.2 (which have been merged into
+trunk *after* changing how manager commands to asterisk are parsed).
+
+Released versions are in::
+
+    https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/tags
+
+For versions prior to the 0.2 release when Matthew Nicholson was
+maintaining pyst, the changes are kept in a `monotone`_ repository
+(monotone is a free distributed version control system). Please contact
+Matthew via Sourceforge if you're interested in intermediate versions.
+
+.. _`monotone`: http://monotone.ca/
+
+prior to that the sources are in the CVS repository on sourceforge.
+
+
 Changes
 -------
 
