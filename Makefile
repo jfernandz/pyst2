@@ -23,8 +23,10 @@ dist: all
 
 clean:
 	rm -f MANIFEST README.html default.css \
-	    $(PKG)/Version.py $(PKG)/Version.pyc ${CHANGES} ${NOTES}
+	    $(PKG)/Version.py $(PKG)/Version.pyc ${CHANGES} ${NOTES} \
+	    upload ReleaseNotes.txt announce_pypi upload_homepage
 	rm -rf dist build
+
 
 release: upload upload_homepage announce_pypi announce
 
