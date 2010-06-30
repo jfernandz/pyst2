@@ -10,7 +10,7 @@ LASTRELEASE:=$(shell ../svntools/lastrelease -n)
 
 USERNAME=schlatterbeck
 PROJECT=pyst
-PACKAGE=${PKG}
+PACKAGE=${PROJECT}
 CHANGES=changes
 NOTES=notes
 
