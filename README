@@ -2,7 +2,7 @@
     :height: 62
     :width: 210
     :alt: SourceForge.net Logo
-    :target: http://sourceforge.net
+    :target: http://sourceforge.net/projects/pyst/
 
 pyst: A Python Interface to Asterisk
 ====================================
@@ -11,6 +11,10 @@ Pyst consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
 of Asterisk configuration files. The library also includes debugging facilities
 for AGI.
+
+Download from `Sourceforge project page`_.
+
+.. _`Sourceforge project page`: http://sourceforge.net/projects/pyst/
 
 Installation is the standard python install::
 
@@ -61,7 +65,7 @@ control tool (currently svn).
   All of pyst's inline documentation needs to be updated.
 
 * manager.py:
-  This should be convereted to be single threaded.  Also there is a race
+  This should be converted to be single threaded.  Also there is a race
   condition when a user calls manager.logoff() followed by
   manager.close().  The close() function may still call logoff again if
   the socket thread has not yet cleared the _connected flag.
