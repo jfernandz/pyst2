@@ -44,7 +44,7 @@ package can only be run on Asterisk platforms.
 Credits
 -------
 
-Thanks to Karl Putland for writing the original package. 
+Thanks to Karl Putland for writing the original package.
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
 
@@ -154,7 +154,7 @@ Version 0.3: Minor feature enhancements
 
 New maintainer Ralf Schlatterbeck, this is my first release, please
 report any problems via the Sourceforge Bug-Tracker or email me
-directly. Thanks to Karl Putland for writing the original package. 
+directly. Thanks to Karl Putland for writing the original package.
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
 The parsing of answers from asterisk was completely rewritten. This
