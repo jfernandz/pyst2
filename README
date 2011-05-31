@@ -35,6 +35,17 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
+.. note::
+	This project has been forked because it was impossible for me to contact
+	the project maintainer (after several attempts), and I'd like to bring the
+	project up-to-date, fix bugs, and make it more usable overall.
+
+	My plans immediate plans include adding full documentation, re-writing some
+	of the core routines, adding a test suite, and accepting pull requests.
+
+	If you are one of the current maintainers, and would like to take over the
+	fork, please contact me: rdegges@gmail.com, so we can get that setup!
+
 Credits
 -------
 
