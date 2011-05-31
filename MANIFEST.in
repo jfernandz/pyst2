@@ -1,4 +1,4 @@
-include ChangeLog
+include CHANGELOG
 include README
 include README.html
 include MANIFEST.in
