@@ -12,7 +12,7 @@ at the top of your script.  The optional arguments to enable() are:
 
     agi         - the agi handle to write verbose messages to
     display     - if true, tracebacks are displayed on the asterisk console
-                  (used with the agi option) 
+                  (used with the agi option)
     logdir      - if set, tracebacks are written to files in this directory
     context     - number of lines of source code to show for each stack frame
 
@@ -194,7 +194,7 @@ class Hook:
                 self.agi.verbose(msg, 4)
             else:
                 self.file.write(msg + '\n')
-        
+
         try:
             self.file.flush()
         except: pass
@@ -210,7 +210,7 @@ def enable(agi=None, display=1, logdir=None, context=5):
     except_hook =  Hook(display=display, logdir=logdir,
                           context=context, agi=agi)
     sys.excepthook = except_hook
-   
+
     global handler
     handler = except_hook.handle
-    
+
