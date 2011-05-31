@@ -22,7 +22,7 @@ licenses = ( 'Python Software Foundation License'
 
 
 setup \
-    ( name = 'pyst'
+    ( name = 'pyst2'
     , version = VERSION
     , description = 'A Python Interface to Asterisk'
     , long_description = ''.join (description)
