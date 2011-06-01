@@ -274,6 +274,7 @@ class Manager(object):
         """
 
         multiline = False
+        status = False
         wait_for_marker = False
         eolcount = 0
         # loop while we are sill running and connected
@@ -303,6 +304,11 @@ class Manager(object):
                             break
                         # ignore empty lines at start
                         continue
+                    # If the user executed the status command, it's a special
+                    # case, so we need to look for a marker.
+                    if 'status will follow' in line:
+                        status = True
+                        wait_for_marker = True
                     lines.append(line)
                     # line not ending in \r\n or without ':' isn't a
                     # valid header and starts multiline response
@@ -310,13 +316,17 @@ class Manager(object):
                         multiline = True
                     # Response: Follows indicates we should wait for end
                     # marker --END COMMAND--
-                    if not multiline and line.startswith('Response') and \
+                    if not (multiline or status) and line.startswith('Response') and \
                         line.split(':', 1)[1].strip() == 'Follows':
                         wait_for_marker = True
                     # same when seeing end of multiline response
                     if multiline and line.startswith('--END COMMAND--'):
                         wait_for_marker = False
                         multiline = False
+                    # same when seeing end of status response
+                    if status and 'StatusComplete' in line:
+                        wait_for_marker = False
+                        status = False
                     if not self._connected.isSet():
                         break
                 else:
