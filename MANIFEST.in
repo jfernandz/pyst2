@@ -1,11 +1,3 @@
-include debian/watch
-include debian/rules
-include debian/changelog
-include debian/control
-include debian/compat
-include debian/copyright
-include rpm/python-pyst.spec
-include ChangeLog
+include CHANGELOG
 include README
-include README.html
 include MANIFEST.in

@@ -1,9 +1,3 @@
-.. image:: http://sflogo.sourceforge.net/sflogo.php?group_id=134329&type=7
-    :height: 62
-    :width: 210
-    :alt: SourceForge.net Logo
-    :target: http://sourceforge.net/projects/pyst/
-
 pyst: A Python Interface to Asterisk
 ====================================
 
@@ -41,10 +35,21 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
+.. note::
+	This project has been forked because it was impossible for me to contact
+	the project maintainer (after several attempts), and I'd like to bring the
+	project up-to-date, fix bugs, and make it more usable overall.
+
+	My plans immediate plans include adding full documentation, re-writing some
+	of the core routines, adding a test suite, and accepting pull requests.
+
+	If you are one of the current maintainers, and would like to take over the
+	fork, please contact me: rdegges@gmail.com, so we can get that setup!
+
 Credits
 -------
 
-Thanks to Karl Putland for writing the original package. 
+Thanks to Karl Putland for writing the original package.
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
 
@@ -154,7 +159,7 @@ Version 0.3: Minor feature enhancements
 
 New maintainer Ralf Schlatterbeck, this is my first release, please
 report any problems via the Sourceforge Bug-Tracker or email me
-directly. Thanks to Karl Putland for writing the original package. 
+directly. Thanks to Karl Putland for writing the original package.
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
 The parsing of answers from asterisk was completely rewritten. This
