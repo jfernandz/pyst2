@@ -1,3 +1,7 @@
+2011-05-31	Randall Degges <rdegges@gmail.com
+	* BUGFIX: Fixing issue that prevented manager.status command from returning
+	  proper output.
+
 2007-01-26  Matthew Nicholson  <mnicholson@digium.com>
 
         * asterisk/manager.py: Make get_header() functions work like
