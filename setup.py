@@ -2,10 +2,8 @@
 
 from distutils.core import setup
 
-try :
-    from asterisk.Version  import VERSION
-except :
-    VERSION = None
+from asterisk import __version__ as version
+
 
 description = []
 f = open ('README')
@@ -23,7 +21,7 @@ licenses = ( 'Python Software Foundation License'
 
 setup \
     ( name = 'pyst2'
-    , version = VERSION
+    , version = version
     , description = 'A Python Interface to Asterisk'
     , long_description = ''.join (description)
     , author = 'Karl Putland'
