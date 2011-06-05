@@ -1,0 +1,14 @@
+# Temporary files.
+*.pyc
+*.swp
+*~
+.coverage
+
+# Build remnants.
+dist
+build
+_build
+*.egg-info
+
+# Auto-generated files.
+MANIFEST
