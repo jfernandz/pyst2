@@ -124,8 +124,12 @@ class ManagerMsg(object):
     def __getitem__(self, hname):
         """Return the specfied header"""
         return self.headers[hname]
+
     def __repr__(self):
-        return self.headers['Response']
+        if 'Response' in self.headers:
+            return self.headers['Response']
+        else:
+            return self.headers['Event']
 
 
 class Event(object):
