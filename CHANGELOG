@@ -1,21 +1,25 @@
-2011-05-31	Randall Degges <rdegges@gmail.com
+
+2012-11-11	Arezqui Belaid <areski@gmail.com>
+	* PEP8 Fixes
+
+2011-05-31	Randall Degges <rdegges@gmail.com>
 	* BUGFIX: Fixing issue that prevented manager.status command from returning
 	  proper output.
 
 2007-01-26  Matthew Nicholson  <mnicholson@digium.com>
 
-        * asterisk/manager.py: Make get_header() functions work like
-          dict.get().
-        * UPGRADE: Updated.
+    * asterisk/manager.py: Make get_header() functions work like
+      dict.get().
+    * UPGRADE: Updated.
 
 2007-01-16  Matthew Nicholson  <mnicholson@digium.com>
 
-        * asterisk/manager.py: Fix support for Manager.command(). Patch from
-          Karl Putland <karl@klasstek.com>.
+    * asterisk/manager.py: Fix support for Manager.command(). Patch from
+      Karl Putland <karl@klasstek.com>.
 
 2007-01-02  Matthew Nicholson  <mnicholson@digium.com>
 
-        * asterisk/agi.py (AGI.set_autohangup): Fixed syntax error.
+    * asterisk/agi.py (AGI.set_autohangup): Fixed syntax error.
 
 2006-11-28  Matthew Nicholson  <mnicholson@digium.com>
 
@@ -94,4 +98,3 @@
 	* ChangeLog: Added.
 	* TODO: Added.
 	* MANIFEST.in: Added ChangeLog and TODO.
-

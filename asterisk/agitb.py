@@ -36,6 +36,7 @@ import sys
 
 __UNDEF__ = []                          # a special sentinel object
 
+
 def lookup(name, frame, locals):
     """Find the value for a given name in the given environment."""
     if name in locals:
@@ -44,7 +45,7 @@ def lookup(name, frame, locals):
         return 'global', frame.f_globals[name]
     if '__builtins__' in frame.f_globals:
         builtins = frame.f_globals['__builtins__']
-        if type(builtins) is type({}):
+        if isinstance(builtins, type({})):
             if name in builtins:
                 return 'builtin', builtins[name]
         else:
@@ -52,12 +53,15 @@ def lookup(name, frame, locals):
                 return 'builtin', getattr(builtins, name)
     return None, __UNDEF__
 
+
 def scanvars(reader, frame, locals):
     """Scan one logical line of Python and look up values of variables used."""
-    import tokenize, keyword
+    import tokenize
+    import keyword
     vars, lasttoken, parent, prefix, value = [], None, None, '', __UNDEF__
     for ttype, token, start, end, line in tokenize.generate_tokens(reader):
-        if ttype == tokenize.NEWLINE: break
+        if ttype == tokenize.NEWLINE:
+            break
         if ttype == tokenize.NAME and token not in keyword.kwlist:
             if lasttoken == '.':
                 if parent is not __UNDEF__:
@@ -77,9 +81,15 @@ def scanvars(reader, frame, locals):
 
 def text((etype, evalue, etb), context=5):
     """Return a plain text document describing a given traceback."""
-    import os, types, time, traceback, linecache, inspect, pydoc
+    import os
+    import types
+    import time
+    import traceback
+    import linecache
+    import inspect
+    import pydoc
 
-    if type(etype) is types.ClassType:
+    if isinstance(etype, types.ClassType):
         etype = etype.__name__
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
@@ -97,13 +107,16 @@ function calls leading up to the error, in the order they occurred.
         if func != '?':
             call = 'in ' + func + \
                 inspect.formatargvalues(args, varargs, varkw, locals,
-                    formatvalue=lambda value: '=' + pydoc.text.repr(value))
+                                        formatvalue=lambda value: '=' + pydoc.text.repr(value))
 
         highlight = {}
+
         def reader(lnum=[lnum]):
             highlight[lnum[0]] = 1
-            try: return linecache.getline(file, lnum[0])
-            finally: lnum[0] += 1
+            try:
+                return linecache.getline(file, lnum[0])
+            finally:
+                lnum[0] += 1
         vars = scanvars(reader, frame, locals)
 
         rows = [' %s %s' % (file, call)]
@@ -111,17 +124,21 @@ function calls leading up to the error, in the order they occurred.
             i = lnum - index
             for line in lines:
                 num = '%5d ' % i
-                rows.append(num+line.rstrip())
+                rows.append(num + line.rstrip())
                 i += 1
 
         done, dump = {}, []
         for name, where, value in vars:
-            if name in done: continue
+            if name in done:
+                continue
             done[name] = 1
             if value is not __UNDEF__:
-                if where == 'global': name = 'global ' + name
-                elif where == 'local': name = name
-                else: name = where + name.split('.')[-1]
+                if where == 'global':
+                    name = 'global ' + name
+                elif where == 'local':
+                    name = name
+                else:
+                    name = where + name.split('.')[-1]
                 dump.append('%s = %s' % (name, pydoc.text.repr(value)))
             else:
                 dump.append(name + ' undefined')
@@ -130,10 +147,10 @@ function calls leading up to the error, in the order they occurred.
         frames.append('\n%s\n' % '\n'.join(rows))
 
     exception = ['%s: %s' % (str(etype), str(evalue))]
-    if type(evalue) is types.InstanceType:
+    if isinstance(evalue, types.InstanceType):
         for name in dir(evalue):
             value = pydoc.text.repr(getattr(evalue, name))
-            exception.append('\n%s%s = %s' % (" "*4, name, value))
+            exception.append('\n%s%s = %s' % (" " * 4, name, value))
 
     import traceback
     return head + ''.join(frames) + ''.join(exception) + '''
@@ -144,11 +161,12 @@ the original traceback:
 %s
 ''' % ''.join(traceback.format_exception(etype, evalue, etb))
 
+
 class Hook:
     """A hook to replace sys.excepthook that shows tracebacks in HTML."""
 
     def __init__(self, display=1, logdir=None, context=5, file=None,
-                  agi=None):
+                 agi=None):
         self.display = display          # send tracebacks to browser if true
         self.logdir = logdir            # log tracebacks to files if not None
         self.context = context          # number of source code lines per frame
@@ -180,7 +198,8 @@ class Hook:
             self.file.write('A problem occured in a python script\n')
 
         if self.logdir is not None:
-            import os, tempfile
+            import os
+            import tempfile
             (fd, path) = tempfile.mkstemp(suffix='.txt', dir=self.logdir)
             try:
                 file = os.fdopen(fd, 'w')
@@ -197,20 +216,22 @@ class Hook:
 
         try:
             self.file.flush()
-        except: pass
+        except:
+            pass
 
 
 handler = Hook().handle
+
+
 def enable(agi=None, display=1, logdir=None, context=5):
     """Install an exception handler that formats tracebacks as HTML.
 
     The optional argument 'display' can be set to 0 to suppress sending the
     traceback to the browser, and 'logdir' can be set to a directory to cause
     tracebacks to be written to files there."""
-    except_hook =  Hook(display=display, logdir=logdir,
-                          context=context, agi=agi)
+    except_hook = Hook(display=display, logdir=logdir,
+                       context=context, agi=agi)
     sys.excepthook = except_hook
 
     global handler
     handler = except_hook.handle
-
