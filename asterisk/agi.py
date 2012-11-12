@@ -19,34 +19,65 @@ pyvr
 
 """
 
-import sys, pprint, re
+import sys
+import pprint
+import re
 from types import ListType
 import signal
 
-DEFAULT_TIMEOUT = 2000 # 2sec timeout used as default for functions that take timeouts
-DEFAULT_RECORD  = 20000 # 20sec record time
+DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
+DEFAULT_RECORD = 20000  # 20sec record time
 
 re_code = re.compile(r'(^\d*)\s*(.*)')
 re_kv = re.compile(r'(?P<key>\w+)=(?P<value>[^\s]+)\s*(?:\((?P<data>.*)\))*')
 
-class AGIException(Exception): pass
-class AGIError(AGIException): pass
 
-class AGIUnknownError(AGIError): pass
+class AGIException(Exception):
+    pass
 
-class AGIAppError(AGIError): pass
+
+class AGIError(AGIException):
+    pass
+
+
+class AGIUnknownError(AGIError):
+    pass
+
+
+class AGIAppError(AGIError):
+    pass
 
 # there are several different types of hangups we can detect
 # they all are derrived from AGIHangup
-class AGIHangup(AGIAppError): pass
-class AGISIGHUPHangup(AGIHangup): pass
-class AGISIGPIPEHangup(AGIHangup): pass
-class AGIResultHangup(AGIHangup): pass
 
-class AGIDBError(AGIAppError): pass
 
-class AGIUsageError(AGIError): pass
-class AGIInvalidCommand(AGIError): pass
+class AGIHangup(AGIAppError):
+    pass
+
+
+class AGISIGHUPHangup(AGIHangup):
+    pass
+
+
+class AGISIGPIPEHangup(AGIHangup):
+    pass
+
+
+class AGIResultHangup(AGIHangup):
+    pass
+
+
+class AGIDBError(AGIAppError):
+    pass
+
+
+class AGIUsageError(AGIError):
+    pass
+
+
+class AGIInvalidCommand(AGIError):
+    pass
+
 
 class AGI:
     """
@@ -73,10 +104,10 @@ class AGI:
             if line == '':
                 #blank line signals end
                 break
-            key,data = line.split(':')[0], ':'.join(line.split(':')[1:])
+            key, data = line.split(':')[0], ':'.join(line.split(':')[1:])
             key = key.strip()
             data = data.strip()
-            if key <> '':
+            if key != '':
                 self.env[key] = data
         sys.stderr.write('class AGI: self.env = ')
         sys.stderr.write(pprint.pformat(self.env))
@@ -92,7 +123,7 @@ class AGI:
     def test_hangup(self):
         """This function throws AGIHangup if we have recieved a SIGHUP"""
         if self._got_sighup:
-           raise AGISIGHUPHangup("Received SIGHUP from Asterisk")
+            raise AGISIGHUPHangup("Received SIGHUP from Asterisk")
 
     def execute(self, command, *args):
         self.test_hangup()
@@ -100,7 +131,7 @@ class AGI:
         try:
             self.send_command(command, *args)
             return self.get_result()
-        except IOError,e:
+        except IOError, e:
             if e.errno == 32:
                 # Broken Pipe * let us go
                 raise AGISIGPIPEHangup("Received SIGPIPE")
@@ -110,7 +141,7 @@ class AGI:
     def send_command(self, command, *args):
         """Send a command to Asterisk"""
         command = command.strip()
-        command = '%s %s' % (command, ' '.join(map(str,args)))
+        command = '%s %s' % (command, ' '.join(map(str, args)))
         command = command.strip()
         if command[-1] != '\n':
             command += '\n'
@@ -121,7 +152,7 @@ class AGI:
     def get_result(self, stdin=sys.stdin):
         """Read the result of a command from Asterisk"""
         code = 0
-        result = {'result':('','')}
+        result = {'result': ('', '')}
         line = stdin.readline().strip()
         sys.stderr.write('    RESULT_LINE: %s\n' % line)
         m = re_code.search(line)
@@ -130,7 +161,7 @@ class AGI:
             code = int(code)
 
         if code == 200:
-            for key,value,data in re_kv.findall(response):
+            for key, value, data in re_kv.findall(response):
                 result[key] = (value, data)
 
                 # If user hangs up... we get 'hangup' in the data
@@ -226,7 +257,8 @@ class AGI:
         extension must not be included in the filename.
         """
         escape_digits = self._process_digit_list(escape_digits)
-        response = self.execute('STREAM FILE', filename, escape_digits, sample_offset)
+        response = self.execute(
+            'STREAM FILE', filename, escape_digits, sample_offset)
         res = response['result'][0]
         if res == '0':
             return ''
@@ -265,7 +297,8 @@ class AGI:
         """
         res = self.execute('SEND IMAGE', filename)['result'][0]
         if res != '0':
-            raise AGIAppError('Channel falure on channel %s' % self.env.get('agi_channel','UNKNOWN'))
+            raise AGIAppError('Channel falure on channel %s' %
+                              self.env.get('agi_channel', 'UNKNOWN'))
 
     def say_digits(self, digits, escape_digits=''):
         """agi.say_digits(digits, escape_digits='') --> digit
@@ -326,7 +359,8 @@ class AGI:
         """
         characters = self._process_digit_list(characters)
         escape_digits = self._process_digit_list(escape_digits)
-        res = self.execute('SAY PHONETIC', characters, escape_digits)['result'][0]
+        res = self.execute(
+            'SAY PHONETIC', characters, escape_digits)['result'][0]
         if res == '0':
             return ''
         else:
@@ -372,8 +406,10 @@ class AGI:
         in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00).
         """
         escape_digits = self._process_digit_list(escape_digits)
-        if format: format = self._quote(format)
-        res = self.execute('SAY DATETIME', seconds, escape_digits, format, zone)['result'][0]
+        if format:
+            format = self._quote(format)
+        res = self.execute(
+            'SAY DATETIME', seconds, escape_digits, format, zone)['result'][0]
         if res == '0':
             return ''
         else:
@@ -401,7 +437,8 @@ class AGI:
         """
         escape_digits = self._process_digit_list(escape_digits)
         if timeout:
-            response = self.execute('GET OPTION', filename, escape_digits, timeout)
+            response = self.execute(
+                'GET OPTION', filename, escape_digits, timeout)
         else:
             response = self.execute('GET OPTION', filename, escape_digits)
 
@@ -455,7 +492,8 @@ class AGI:
         exceeding the end of the file
         """
         escape_digits = self._process_digit_list(escape_digits)
-        res = self.execute('RECORD FILE', self._quote(filename), format, escape_digits, timeout, offset, beep)['result'][0]
+        res = self.execute('RECORD FILE', self._quote(filename), format,
+                           escape_digits, timeout, offset, beep)['result'][0]
         try:
             return chr(int(res))
         except:
@@ -510,11 +548,11 @@ class AGI:
         7 Line is busy
         """
         try:
-           result = self.execute('CHANNEL STATUS', channel)
+            result = self.execute('CHANNEL STATUS', channel)
         except AGIHangup:
-           raise
+            raise
         except AGIAppError:
-           result = {'result': ('-1','')}
+            result = {'result': ('-1', '')}
 
         return int(result['result'][0])
 
@@ -530,27 +568,28 @@ class AGI:
         the variable is not set, an empty string is returned.
         """
         try:
-           result = self.execute('GET VARIABLE', self._quote(name))
+            result = self.execute('GET VARIABLE', self._quote(name))
         except AGIResultHangup:
-           result = {'result': ('1', 'hangup')}
+            result = {'result': ('1', 'hangup')}
 
         res, value = result['result']
         return value
 
-    def get_full_variable(self, name, channel = None):
+    def get_full_variable(self, name, channel=None):
         """Get a channel variable.
 
         This function returns the value of the indicated channel variable.  If
         the variable is not set, an empty string is returned.
         """
         try:
-           if channel:
-              result = self.execute('GET FULL VARIABLE', self._quote(name), self._quote(channel))
-           else:
-              result = self.execute('GET FULL VARIABLE', self._quote(name))
+            if channel:
+                result = self.execute('GET FULL VARIABLE',
+                                      self._quote(name), self._quote(channel))
+            else:
+                result = self.execute('GET FULL VARIABLE', self._quote(name))
 
         except AGIResultHangup:
-           result = {'result': ('1', 'hangup')}
+            result = {'result': ('1', 'hangup')}
 
         res, value = result['result']
         return value
@@ -571,10 +610,12 @@ class AGI:
         """
         family = '"%s"' % family
         key = '"%s"' % key
-        result = self.execute('DATABASE GET', self._quote(family), self._quote(key))
+        result = self.execute(
+            'DATABASE GET', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
-            raise AGIDBError('Key not found in database: family=%s, key=%s' % (family, key))
+            raise AGIDBError('Key not found in database: family=%s, key=%s' %
+                             (family, key))
         elif res == '1':
             return value
         else:
@@ -585,7 +626,8 @@ class AGI:
         Adds or updates an entry in the Asterisk database for a
         given family, key, and value.
         """
-        result = self.execute('DATABASE PUT', self._quote(family), self._quote(key), self._quote(value))
+        result = self.execute('DATABASE PUT', self._quote(
+            family), self._quote(key), self._quote(value))
         res, value = result['result']
         if res == '0':
             raise AGIDBError('Unable to put vaule in databale: family=%s, key=%s, value=%s' % (family, key, value))
@@ -595,7 +637,8 @@ class AGI:
         Deletes an entry in the Asterisk database for a
         given family and key.
         """
-        result = self.execute('DATABASE DEL', self._quote(family), self._quote(key))
+        result = self.execute(
+            'DATABASE DEL', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
             raise AGIDBError('Unable to delete from database: family=%s, key=%s' % (family, key))
@@ -605,7 +648,8 @@ class AGI:
         Deletes a family or specific keytree with in a family
         in the Asterisk database.
         """
-        result = self.execute('DATABASE DELTREE', self._quote(family), self._quote(key))
+        result = self.execute(
+            'DATABASE DELTREE', self._quote(family), self._quote(key))
         res, value = result['result']
         if res == '0':
             raise AGIDBError('Unable to delete tree from database: family=%s, key=%s' % (family, key))
@@ -616,7 +660,7 @@ class AGI:
         """
         self.execute('NOOP')
 
-if __name__=='__main__':
+if __name__ == '__main__':
     agi = AGI()
     #agi.appexec('festival','Welcome to Klass Technologies.  Thank you for calling.')
     #agi.appexec('festival','This is a test of the text to speech engine.')
@@ -638,11 +682,12 @@ if __name__=='__main__':
     #agi.appexec('background','demo-congrats')
 
     try:
-        agi.appexec('backgrounder','demo-congrats')
+        agi.appexec('backgrounder', 'demo-congrats')
     except AGIAppError:
-        sys.stderr.write("Handled exception for missing application backgrounder\n")
+        sys.stderr.write(
+            "Handled exception for missing application backgrounder\n")
 
-    agi.set_variable('foo','bar')
+    agi.set_variable('foo', 'bar')
     agi.get_variable('foo')
 
     try:
@@ -661,6 +706,7 @@ if __name__=='__main__':
         agi.database_del('foo', 'bar')
         agi.database_deltree('foo')
     except AGIDBError:
-        sys.stderr.write("Handled exception for missing database entry bar:foo\n")
+        sys.stderr.write(
+            "Handled exception for missing database entry bar:foo\n")
 
     agi.hangup()
