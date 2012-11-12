@@ -319,6 +319,7 @@ class Manager(object):
                         status = True
                         wait_for_marker = True
                     lines.append(line)
+
                     # line not ending in \r\n or without ':' isn't a
                     # valid header and starts multiline response
                     if not line.endswith('\r\n') or ':' not in line:
@@ -612,6 +613,7 @@ class Manager(object):
 
     def playdtmf(self, channel, digit):
         """Plays a dtmf digit on the specified channel"""
+        
         cdict = {'Action': 'PlayDTMF'}
         cdict['Channel'] = channel
         cdict['Digit'] = digit
@@ -626,14 +628,12 @@ class Manager(object):
         cdict['Channel'] = channel
         cdict['Timeout'] = timeout
         response = self.send_action(cdict)
-
         return response
 
     def mailbox_count(self, mailbox):
         cdict = {'Action': 'MailboxCount'}
         cdict['Mailbox'] = mailbox
         response = self.send_action(cdict)
-
         return response
 
     def sippeers(self):
