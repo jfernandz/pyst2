@@ -6,7 +6,7 @@ from asterisk import __version__ as version
 
 
 description = []
-f = open('README')
+f = open('README.rst')
 
 logo_stripped = False
 for line in f:
@@ -26,7 +26,7 @@ setup(
     author_email='kputland@users.sourceforge.net',
     maintainer='Randall Degges',
     maintainer_email='rdegges@gmail.com',
-    url='http://www.sourceforge.net/projects/pyst/',
+    url='https://github.com/rdegges/pyst2',
     packages=['asterisk'],
     license=', '.join(licenses),
     platforms='Any',
