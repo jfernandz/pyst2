@@ -79,7 +79,8 @@ def scanvars(reader, frame, locals):
     return vars
 
 
-def text((etype, evalue, etb), context=5):
+def text(param_tuple, context=5):
+    (etype, evalue, etb) = param_tuple
     """Return a plain text document describing a given traceback."""
     import os
     import types
