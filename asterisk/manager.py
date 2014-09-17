@@ -613,7 +613,7 @@ class Manager(object):
 
     def playdtmf(self, channel, digit):
         """Plays a dtmf digit on the specified channel"""
-        
+
         cdict = {'Action': 'PlayDTMF'}
         cdict['Channel'] = channel
         cdict['Digit'] = digit
@@ -644,6 +644,14 @@ class Manager(object):
     def sipshowpeer(self, peer):
         cdict = {'Action': 'SIPshowpeer'}
         cdict['Peer'] = peer
+        response = self.send_action(cdict)
+        return response
+
+    def reload(self, module):
+        """ Reloads config for a given module """
+
+        cdict = {'Action': 'Reload'}
+        cdict['Module'] = module
         response = self.send_action(cdict)
         return response
 
