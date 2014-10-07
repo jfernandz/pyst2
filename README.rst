@@ -1,20 +1,42 @@
-pyst: A Python Interface to Asterisk
+pyst2: A Python Interface to Asterisk
 ====================================
 
-Pyst consists of a set of interfaces and libraries to allow programming of
+Pyst2 consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
 of Asterisk configuration files. The library also includes debugging facilities
 for AGI.
 
-Download from `Sourceforge project page`_.
+This project has been forked from pyst (http://sf.net/projects/pyst/) because
+it was impossible for me to contact the project maintainer (after several
+attempts), and I'd like to bring the project up-to-date, fix bugs, and make
+it more usable overall.
 
-.. _`Sourceforge project page`: http://sourceforge.net/projects/pyst/
+My immediate plans include adding full documentation, re-writing some
+of the core routines, adding a test suite, and accepting pull requests.
+
+If you are one of the current maintainers, and would like to take over the
+fork, please contact me: rdegges@gmail.com, so we can get that setup!
+
+Requirements
+------------
+
+1. six
+
+Installation
+------------
+
+Download from `Github project page`_.
+
+.. _`Github project page`: https://github.com/rdegges/pyst2
 
 Installation is the standard python install::
 
- tar xvf pyst.tar.gz
- cd pyst
+ git clone https://github.com/rdegges/pyst2.git
+ cd pyst2
  python setup.py install --prefix=/usr/local
+
+Documentation
+-------------
 
 Documentation is currently only in python docstrings, you can use
 pythons built-in help facility::
@@ -35,23 +57,14 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
-.. note::
-	This project has been forked because it was impossible for me to contact
-	the project maintainer (after several attempts), and I'd like to bring the
-	project up-to-date, fix bugs, and make it more usable overall.
-
-	My plans immediate plans include adding full documentation, re-writing some
-	of the core routines, adding a test suite, and accepting pull requests.
-
-	If you are one of the current maintainers, and would like to take over the
-	fork, please contact me: rdegges@gmail.com, so we can get that setup!
-
 Credits
 -------
 
 Thanks to Karl Putland for writing the original package.
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
+Thanks to Randall Degges for maintaining this for and accepting
+pull requests.
 
 Things to do for pyst
 ---------------------
@@ -59,9 +72,8 @@ Things to do for pyst
 This is the original changelog merged into the readme file. I'm not so
 sure I really want to change all these things (in particular the
 threaded implementation looks good to me). I will maintain a section
-summarizing the changes in this README, the ChangeLog won't be
-maintained any longer. Detailed changes will be available in the version
-control tool (currently svn).
+summarizing the changes in this README. Detailed changes will be
+available in the version control tool (currently git).
 
 * ChangeLog:
   The ChangeLog needs to be updated from the monotone logs.
@@ -82,28 +94,28 @@ control tool (currently svn).
 Matthew Nicholson writes on the mailinglist (note that I'm not sure I'll do
 this, I'm currently satisfied with the threaded implementation):
 
-    For pyst 0.3 I am planning to clean up the manager.py.  There are
-    several know issues with the code.  No one has actually reported these
-    as problems, but I have personally had trouble with these.  Currently
-    manager.py runs in several threads, the main program thread, a thread to
-    read from the network, and an event distribution thread.  This causes
-    problems with non thread safe code such as the MySQLdb libraries.  This
-    design also causes problems when an event handler throws an exception
-    that causes the event processing thread to terminate.
+  For pyst 0.3 I am planning to clean up the manager.py.  There are
+  several know issues with the code.  No one has actually reported these
+  as problems, but I have personally had trouble with these.  Currently
+  manager.py runs in several threads, the main program thread, a thread to
+  read from the network, and an event distribution thread.  This causes
+  problems with non thread safe code such as the MySQLdb libraries.  This
+  design also causes problems when an event handler throws an exception
+  that causes the event processing thread to terminate.
 
-    The second problem is with the way actions are sent.  Each action has a
-    specific function associated with it in the manager object that takes
-    all possible arguments that may ever be passed to that action.  This
-    makes the api somewhat rigid and the Manager object cluttered.
+  The second problem is with the way actions are sent.  Each action has a
+  specific function associated with it in the manager object that takes
+  all possible arguments that may ever be passed to that action.  This
+  makes the api somewhat rigid and the Manager object cluttered.
 
-    To solve these problems I am basically going to copy the design of my
-    Astxx manager library (written in c++) and make it more python like.
-    Each action will be a different object with certain methods to handle
-    various tasks, with one function in the actual Manager class to send the
-    action.  This will make the Manager class much smaller and much more
-    flexible.  The current code will be consolidated into a single threaded
-    design with hooks to have the library process events and such.  These
-    hooks will be called from the host application's main loop.
+  To solve these problems I am basically going to copy the design of my
+  Astxx manager library (written in c++) and make it more python like.
+  Each action will be a different object with certain methods to handle
+  various tasks, with one function in the actual Manager class to send the
+  action.  This will make the Manager class much smaller and much more
+  flexible.  The current code will be consolidated into a single threaded
+  design with hooks to have the library process events and such.  These
+  hooks will be called from the host application's main loop.
 
 
 Upgrading from older versions

@@ -14,20 +14,20 @@ try:
 
         # get a status report
         response = manager.status()
-        print response
+        print(response)
         
         response = manager.command('core show channels concise')
-        print response.data
+        print(response.data)
 
         manager.logoff()
-    except asterisk.manager.ManagerSocketException, (errno, reason):
-        print "Error connecting to the manager: %s" % reason
+    except asterisk.manager.ManagerSocketException as e:
+        print "Error connecting to the manager: %s" % e.strerror
         sys.exit(1)
-    except asterisk.manager.ManagerAuthException, reason:
-        print "Error logging in to the manager: %s" % reason
+    except asterisk.manager.ManagerAuthException as e:
+        print "Error logging in to the manager: %s" % e.strerror
         sys.exit(1)
-    except asterisk.manager.ManagerException, reason:
-        print "Error: %s" % reason
+    except asterisk.manager.ManagerException as e:
+        print "Error: %s" % e.strerror
         sys.exit(1)
 
 finally:

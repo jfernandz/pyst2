@@ -11,11 +11,11 @@ This module provides parsing functionality for asterisk config files.
    # load and parse the config file
    try:
       config = asterisk.config.Config('/etc/asterisk/extensions.conf')
-   except asterisk.config.ParseError, (line, reason):
-      print "Parse Error line: %s: %s" % (line, reason)
+   except asterisk.config.ParseError as e:
+      print "Parse Error line: %s: %s" % (e.line, e.strerror)
       sys.exit(1)
-   except IOError, reason:
-      print "Error opening file: %s" % reason
+   except IOError as e:
+      print "Error opening file: %s" % e.strerror
       sys.exit(1)
 
    # print our parsed output

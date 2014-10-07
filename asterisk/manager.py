@@ -32,14 +32,14 @@ This module provides a Python API for interfacing with the asterisk manager.
            response = manager.status()
 
            manager.logoff()
-       except asterisk.manager.ManagerSocketException, (errno, reason):
-          print "Error connecting to the manager: %s" % reason
+       except asterisk.manager.ManagerSocketException as e:
+          print "Error connecting to the manager: %s" % e.strerror
           sys.exit(1)
-       except asterisk.manager.ManagerAuthException, reason:
-          print "Error logging in to the manager: %s" % reason
+       except asterisk.manager.ManagerAuthException as e:
+          print "Error logging in to the manager: %s" % e.strerror
           sys.exit(1)
-       except asterisk.manager.ManagerException, reason:
-          print "Error: %s" % reason
+       except asterisk.manager.ManagerException as e:
+          print "Error: %s" % e.strerror
           sys.exit(1)
 
    finally:
@@ -56,9 +56,8 @@ import sys
 import os
 import socket
 import threading
-import Queue
+from six.moves import queue
 import re
-from cStringIO import StringIO
 from types import *
 from time import sleep
 
@@ -181,9 +180,9 @@ class Manager(object):
         self.hostname = socket.gethostname()
 
         # our queues
-        self._message_queue = Queue.Queue()
-        self._response_queue = Queue.Queue()
-        self._event_queue = Queue.Queue()
+        self._message_queue = queue.Queue()
+        self._response_queue = queue.Queue()
+        self._event_queue = queue.Queue()
 
         # callbacks for events
         self._event_callbacks = {}
@@ -265,8 +264,8 @@ class Manager(object):
         try:
             self._sock.write(command)
             self._sock.flush()
-        except socket.error, (errno, reason):
-            raise ManagerSocketException(errno, reason)
+        except socket.error as e:
+            raise ManagerSocketException(e.errno, e.strerror)
 
         self._reswaiting.insert(0, 1)
         response = self._response_queue.get()
@@ -410,7 +409,7 @@ class Manager(object):
                 elif message.has_header('Response'):
                     self._response_queue.put(message)
                 else:
-                    print 'No clue what we got\n%s' % message.data
+                    print('No clue what we got\n%s' % message.data)
         finally:
             # wait for our data receiving thread to exit
             t.join()
@@ -445,7 +444,7 @@ class Manager(object):
             raise ManagerException('Already connected to manager')
 
         # make sure host is a string
-        assert type(host) in StringTypes
+        assert type(host) is str
 
         port = int(port)  # make sure port is an int
 
@@ -455,8 +454,8 @@ class Manager(object):
             _sock.connect((host, port))
             self._sock = _sock.makefile()
             _sock.close()
-        except socket.error, (errno, reason):
-            raise ManagerSocketException(errno, reason)
+        except socket.error as e:
+            raise ManagerSocketException(e.errno, e.strerror)
 
         # we are connected and running
         self._connected.set()

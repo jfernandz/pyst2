@@ -9,7 +9,7 @@ VERSION=$(VERSIONPY)
 LASTRELEASE:=$(shell ../svntools/lastrelease -n)
 
 USERNAME=schlatterbeck
-PROJECT=pyst
+PROJECT=pyst2
 PACKAGE=${PROJECT}
 CHANGES=changes
 NOTES=notes
