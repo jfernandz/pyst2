@@ -22,7 +22,6 @@ pyvr
 import sys
 import pprint
 import re
-from types import ListType
 import signal
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
@@ -131,7 +130,7 @@ class AGI:
         try:
             self.send_command(command, *args)
             return self.get_result()
-        except IOError, e:
+        except IOError as e:
             if e.errno == 32:
                 # Broken Pipe * let us go
                 raise AGISIGPIPEHangup("Received SIGPIPE")
@@ -188,7 +187,7 @@ class AGI:
             raise AGIUnknownError(code, 'Unhandled code or undefined response')
 
     def _process_digit_list(self, digits):
-        if type(digits) == ListType:
+        if type(digits) is list:
             digits = ''.join(map(str, digits))
         return self._quote(digits)
 

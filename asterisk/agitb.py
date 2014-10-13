@@ -79,7 +79,7 @@ def scanvars(reader, frame, locals):
     return vars
 
 
-def text((etype, evalue, etb), context=5):
+def text(eparams, context=5):
     """Return a plain text document describing a given traceback."""
     import os
     import types
@@ -89,6 +89,7 @@ def text((etype, evalue, etb), context=5):
     import inspect
     import pydoc
 
+    etype, evalue, etb = eparams
     if isinstance(etype, types.ClassType):
         etype = etype.__name__
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable

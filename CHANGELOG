@@ -1,3 +1,21 @@
+2014-10-08  Timur Tuchkovenko <eill@yandex.ru>
+	* UPGRADE: initial Python 3 support. Now pyst2 requires
+	  Python 'six' module. Some minor changes in other files.
+
+2014-09-14  Sp1tF1r3 <https://github.com/Sp1tF1r3>
+	* asterisk/manager.py: added action 'Reload' for Asterisk Manager
+	  Interface (AMI).
+
+2013-12-03  Ludovic Gasc <gmludo@gmail.com>
+	* examples/agi_script.py: added example script to explain AGI
+	  functionality.
+	* README: renamed to REAMDE.rst for Github's Markdown support.
+	* setup.py: minor changes.
+
+2012-11-12  Arezqui Belaid <areski@gmail.com>
+	* asterisk/manager.py: minor empty line enhancements.
+	* examples/show_channels.py: added example script to show information via
+	  Asterisk Manager Interface (AMI).
 
 2012-11-11	Arezqui Belaid <areski@gmail.com>
 	* PEP8 Fixes
@@ -8,18 +26,18 @@
 
 2007-01-26  Matthew Nicholson  <mnicholson@digium.com>
 
-    * asterisk/manager.py: Make get_header() functions work like
-      dict.get().
-    * UPGRADE: Updated.
+	* asterisk/manager.py: Make get_header() functions work like
+	  dict.get().
+	* UPGRADE: Updated.
 
 2007-01-16  Matthew Nicholson  <mnicholson@digium.com>
 
-    * asterisk/manager.py: Fix support for Manager.command(). Patch from
-      Karl Putland <karl@klasstek.com>.
+	* asterisk/manager.py: Fix support for Manager.command(). Patch from
+	  Karl Putland <karl@klasstek.com>.
 
 2007-01-02  Matthew Nicholson  <mnicholson@digium.com>
 
-    * asterisk/agi.py (AGI.set_autohangup): Fixed syntax error.
+	* asterisk/agi.py (AGI.set_autohangup): Fixed syntax error.
 
 2006-11-28  Matthew Nicholson  <mnicholson@digium.com>
 
