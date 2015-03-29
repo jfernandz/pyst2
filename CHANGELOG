@@ -1,3 +1,6 @@
+2015-03-39  Timur Tuchkovenko <eill@yandex.ru>
+    * UPGRADE: AMI fix for Python 3 compatibility.
+
 2014-10-08  Timur Tuchkovenko <eill@yandex.ru>
 	* UPGRADE: initial Python 3 support. Now pyst2 requires
 	  Python 'six' module. Some minor changes in other files.
