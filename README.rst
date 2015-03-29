@@ -1,5 +1,5 @@
 pyst2: A Python Interface to Asterisk
-====================================
+=====================================
 
 Pyst2 consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
