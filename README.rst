@@ -1,13 +1,44 @@
 pyst2: A Python Interface to Asterisk
 =====================================
 
+.. image:: https://img.shields.io/pypi/v/pyst2.svg
+    :alt: pyst2 Release
+    :target: https://pypi.python.org/pypi/pyst2
+
+.. image:: https://img.shields.io/pypi/dm/pyst2.svg
+    :alt: pyst2 Downloads
+    :target: https://pypi.python.org/pypi/pyst2
+
+.. image:: https://img.shields.io/travis/rdegges/pyst2.svg
+    :alt: pyst2 Build
+    :target: https://travis-ci.org/rdegges/pyst2
+
+.. image:: https://github.com/rdegges/pyst2/raw/master/assets/snake-sketch.jpg
+   :alt: Snake Sketch
+
+
+Meta
+----
+
+- Author: Randall Degges
+- Email: r@rdegges.com
+- Site: http://www.rdegges.com
+- Status: *looking for maintainer*, active
+
 **NOTE**: This project is in need of an active maintainer.  I'm quite busy with
 other non-asterisk related projects in my personal time, so if you're a good
 Python programmer, and working with this library and Asterisk on a daily basis
 -- please consider maintaining the project!  Contact me for more information:
 r@rdegges.com
 
-Pyst2 consists of a set of interfaces and libraries to allow programming of
+In the meantime, I'm happy to accept pull requests and cut releases as needed.
+If you want to contribute to the project, please do!
+
+
+Purpose
+-------
+
+pyst2 consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
 of Asterisk configuration files. The library also includes debugging facilities
 for AGI.
@@ -27,9 +58,13 @@ fork, please contact me: r@rdegges.com, so we can get that setup!
 Installation
 ------------
 
-To install ``pyst2``, just use pip!
+To install ``pyst2``, simply run:
+
+.. code-block:: console
 
     $ pip install pyst2
+
+This will install the latest version of the library automatically.
 
 
 Documentation
