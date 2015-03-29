@@ -1,6 +1,12 @@
 pyst2: A Python Interface to Asterisk
 =====================================
 
+**NOTE**: This project is in need of an active maintainer.  I'm quite busy with
+other non-asterisk related projects in my personal time, so if you're a good
+Python programmer, and working with this library and Asterisk on a daily basis
+-- please consider maintaining the project!  Contact me for more information:
+r@rdegges.com
+
 Pyst2 consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
 of Asterisk configuration files. The library also includes debugging facilities
@@ -15,7 +21,7 @@ My immediate plans include adding full documentation, re-writing some
 of the core routines, adding a test suite, and accepting pull requests.
 
 If you are one of the current maintainers, and would like to take over the
-fork, please contact me: rdegges@gmail.com, so we can get that setup!
+fork, please contact me: r@rdegges.com, so we can get that setup!
 
 Requirements
 ------------
