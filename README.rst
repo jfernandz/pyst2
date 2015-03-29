@@ -119,23 +119,6 @@ this, I'm currently satisfied with the threaded implementation):
   hooks will be called from the host application's main loop.
 
 
-Upgrading from older versions
------------------------------
-
-If upgrading from...
-
-* 0.2:
-
-   - ``get_header()`` methods in ``manager.py`` now work like
-     ``dict.get()`` instead of ``dict[key]``
-
-
-* 0.1.0:
-
-   - ``agi.get_variable`` no longer throws an exception, instead it
-     returns an empty string when a channel variable is not set.
-   - ``manager.quit()`` has be renamed to ``manager.close()``
-
 Source Code Repository Access
 -----------------------------
 
