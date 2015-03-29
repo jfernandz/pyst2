@@ -23,23 +23,14 @@ of the core routines, adding a test suite, and accepting pull requests.
 If you are one of the current maintainers, and would like to take over the
 fork, please contact me: r@rdegges.com, so we can get that setup!
 
-Requirements
-------------
-
-1. six
 
 Installation
 ------------
 
-Download from `Github project page`_.
+To install ``pyst2``, just use pip!
 
-.. _`Github project page`: https://github.com/rdegges/pyst2
+    $ pip install pyst2
 
-Installation is the standard python install::
-
- git clone https://github.com/rdegges/pyst2.git
- cd pyst2
- python setup.py install --prefix=/usr/local
 
 Documentation
 -------------
@@ -63,14 +54,18 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
+
 Credits
 -------
 
 Thanks to Karl Putland for writing the original package.
+
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
+
 Thanks to Randall Degges for maintaining this for and accepting
 pull requests.
+
 
 Things to do for pyst
 ---------------------
