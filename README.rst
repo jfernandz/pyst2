@@ -117,36 +117,3 @@ this, I'm currently satisfied with the threaded implementation):
   flexible.  The current code will be consolidated into a single threaded
   design with hooks to have the library process events and such.  These
   hooks will be called from the host application's main loop.
-
-
-Changes
--------
-
-Version 0.3: Minor feature enhancements
-
-New maintainer Ralf Schlatterbeck, this is my first release, please
-report any problems via the Sourceforge Bug-Tracker or email me
-directly. Thanks to Karl Putland for writing the original package.
-Thanks to Matthew Nicholson for maintaining the package for some years
-and for handing over maintenance when he was no longer interested.
-The parsing of answers from asterisk was completely rewritten. This
-should fix problems people were having with commands returning embedded
-'/' or empty lines. Some new manager commands added.
-
- - Add playdtmf manager command
- - add sippeers and sipshowpeer manager commands
- - rewritten manager communication
- - should no longer choke on '/' in answers returned from a manager
-   command (fixes SF Bug 2947866)
- - should now correctly parse multi-line output with embedded empty
-   lines, e.g. ``mgr.command('dialplan show')``
- - Bug-fix for list manipulation in ``event_dispatch``, thanks to Jan
-   Mueller, see mailinglist comment from 2008-04-18
- - Merge unreleased changes from repository of Matthew Nicholson
-   in particular a typo in ``agi.py`` for ``set_autohangup``, and change
-   of ``get_header`` methods (see Upgrading instructions). The fixed
-   ``manager.command`` support is already in (with a different
-   solution). The unreleased changes are also on the 0.2 branch in the
-   subversion repository in case somebody is interested.
-
-See the ChangeLog for older changes.
