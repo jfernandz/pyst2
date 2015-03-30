@@ -1,4 +1,8 @@
-2015-03-39  Timur Tuchkovenko <eill@yandex.ru>
+2015-03-30  Areski Belaid
+
+    * Fixing the MANIFEST.in file I accidentally broke :)
+
+2015-03-29  Timur Tuchkovenko <eill@yandex.ru>
     * UPGRADE: AMI fix for Python 3 compatibility.
 
 2014-10-08  Timur Tuchkovenko <eill@yandex.ru>
