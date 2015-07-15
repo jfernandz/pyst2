@@ -331,7 +331,7 @@ class Manager(object):
                             line.split(':', 1)[1].strip() == 'Follows':
                         wait_for_marker = True
                     # same when seeing end of multiline response
-                    if multiline and line.startswith('--END COMMAND--'):
+                    if multiline and (line.startswith('--END COMMAND--') or line.strip().endswith('--END COMMAND--')):
                         wait_for_marker = False
                         multiline = False
                     # same when seeing end of status response
