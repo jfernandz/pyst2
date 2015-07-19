@@ -263,7 +263,7 @@ class Manager(object):
 
         # lock the socket and send our command
         try:
-            self._sock.write(command.encode('ascii'))
+            self._sock.write(command.encode('utf8'))
             self._sock.flush()
         except socket.error as e:
             raise ManagerSocketException(e.errno, e.strerror)
@@ -291,7 +291,7 @@ class Manager(object):
             try:
                 lines = []
                 for line in self._sock:
-                    line = line.decode('ascii')
+                    line = line.decode('utf8')
                     # check to see if this is the greeting line
                     if not self.title and '/' in line and not ':' in line:
                         # store the title of the manager we are connecting to:
