@@ -1,3 +1,7 @@
+2015-07-18  Artem Sorokin
+
+    * Fixing UTF-8 encoding issues.
+
 2015-07-15  Artem Sorokin
 
     * Fix multiline command end marker for OpenVox GSM Gateway.
