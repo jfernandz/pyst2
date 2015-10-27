@@ -56,6 +56,7 @@ import sys
 import os
 import socket
 import threading
+from six import PY3
 from six.moves import queue
 import re
 from types import *
@@ -262,7 +263,7 @@ class Manager(object):
 
         # lock the socket and send our command
         try:
-            self._sock.write(command)
+            self._sock.write(command.encode('utf8'))
             self._sock.flush()
         except socket.error as e:
             raise ManagerSocketException(e.errno, e.strerror)
@@ -290,6 +291,7 @@ class Manager(object):
             try:
                 lines = []
                 for line in self._sock:
+                    line = line.decode('utf8')
                     # check to see if this is the greeting line
                     if not self.title and '/' in line and not ':' in line:
                         # store the title of the manager we are connecting to:
@@ -329,7 +331,7 @@ class Manager(object):
                             line.split(':', 1)[1].strip() == 'Follows':
                         wait_for_marker = True
                     # same when seeing end of multiline response
-                    if multiline and line.startswith('--END COMMAND--'):
+                    if multiline and (line.startswith('--END COMMAND--') or line.strip().endswith('--END COMMAND--')):
                         wait_for_marker = False
                         multiline = False
                     # same when seeing end of status response
@@ -452,7 +454,10 @@ class Manager(object):
         try:
             _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             _sock.connect((host, port))
-            self._sock = _sock.makefile()
+            if PY3:
+                self._sock = _sock.makefile(mode='rwb', buffering=0)
+            else:
+                self._sock = _sock.makefile()
             _sock.close()
         except socket.error as e:
             raise ManagerSocketException(e.errno, e.strerror)

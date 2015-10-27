@@ -1,7 +1,44 @@
 pyst2: A Python Interface to Asterisk
-====================================
+=====================================
 
-Pyst2 consists of a set of interfaces and libraries to allow programming of
+.. image:: https://img.shields.io/pypi/v/pyst2.svg
+    :alt: pyst2 Release
+    :target: https://pypi.python.org/pypi/pyst2
+
+.. image:: https://img.shields.io/pypi/dm/pyst2.svg
+    :alt: pyst2 Downloads
+    :target: https://pypi.python.org/pypi/pyst2
+
+.. image:: https://img.shields.io/travis/rdegges/pyst2.svg
+    :alt: pyst2 Build
+    :target: https://travis-ci.org/rdegges/pyst2
+
+.. image:: https://github.com/rdegges/pyst2/raw/master/assets/snake-sketch.jpg
+   :alt: Snake Sketch
+
+
+Meta
+----
+
+- Author: Randall Degges
+- Email: r@rdegges.com
+- Site: http://www.rdegges.com
+- Status: *looking for maintainer*, active
+
+**NOTE**: This project is in need of an active maintainer.  I'm quite busy with
+other non-asterisk related projects in my personal time, so if you're a good
+Python programmer, and working with this library and Asterisk on a daily basis
+-- please consider maintaining the project!  Contact me for more information:
+r@rdegges.com
+
+In the meantime, I'm happy to accept pull requests and cut releases as needed.
+If you want to contribute to the project, please do!
+
+
+Purpose
+-------
+
+pyst2 consists of a set of interfaces and libraries to allow programming of
 Asterisk from python. The library currently supports AGI, AMI, and the parsing
 of Asterisk configuration files. The library also includes debugging facilities
 for AGI.
@@ -15,25 +52,20 @@ My immediate plans include adding full documentation, re-writing some
 of the core routines, adding a test suite, and accepting pull requests.
 
 If you are one of the current maintainers, and would like to take over the
-fork, please contact me: rdegges@gmail.com, so we can get that setup!
+fork, please contact me: r@rdegges.com, so we can get that setup!
 
-Requirements
-------------
-
-1. six
 
 Installation
 ------------
 
-Download from `Github project page`_.
+To install ``pyst2``, simply run:
 
-.. _`Github project page`: https://github.com/rdegges/pyst2
+.. code-block:: console
 
-Installation is the standard python install::
+    $ pip install pyst2
 
- git clone https://github.com/rdegges/pyst2.git
- cd pyst2
- python setup.py install --prefix=/usr/local
+This will install the latest version of the library automatically.
+
 
 Documentation
 -------------
@@ -57,14 +89,18 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
+
 Credits
 -------
 
 Thanks to Karl Putland for writing the original package.
+
 Thanks to Matthew Nicholson for maintaining the package for some years
 and for handing over maintenance when he was no longer interested.
+
 Thanks to Randall Degges for maintaining this for and accepting
 pull requests.
+
 
 Things to do for pyst
 ---------------------
@@ -116,82 +152,3 @@ this, I'm currently satisfied with the threaded implementation):
   flexible.  The current code will be consolidated into a single threaded
   design with hooks to have the library process events and such.  These
   hooks will be called from the host application's main loop.
-
-
-Upgrading from older versions
------------------------------
-
-If upgrading from...
-
-* 0.2:
-
-   - ``get_header()`` methods in ``manager.py`` now work like
-     ``dict.get()`` instead of ``dict[key]``
-
-
-* 0.1.0:
-
-   - ``agi.get_variable`` no longer throws an exception, instead it
-     returns an empty string when a channel variable is not set.
-   - ``manager.quit()`` has be renamed to ``manager.close()``
-
-Source Code Repository Access
------------------------------
-
-The current versions are kept in a Subversion repository on Sourceforge.
-You can check out the trunk with::
-
-    svn co https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/trunk pyst
-
-There is also a 0.2 branch in::
-
-    https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/branches/0.2
-
-which contains unreleased changes after 0.2 (which have been merged into
-trunk *after* changing how manager commands to asterisk are parsed).
-
-Released versions are in::
-
-    https://pyst.svn.sourceforge.net/svnroot/pyst/pyst/tags
-
-For versions prior to the 0.2 release when Matthew Nicholson was
-maintaining pyst, the changes are kept in a `monotone`_ repository
-(monotone is a free distributed version control system). Please contact
-Matthew via Sourceforge if you're interested in intermediate versions.
-
-.. _`monotone`: http://monotone.ca/
-
-prior to that the sources are in the CVS repository on sourceforge.
-
-
-Changes
--------
-
-Version 0.3: Minor feature enhancements
-
-New maintainer Ralf Schlatterbeck, this is my first release, please
-report any problems via the Sourceforge Bug-Tracker or email me
-directly. Thanks to Karl Putland for writing the original package.
-Thanks to Matthew Nicholson for maintaining the package for some years
-and for handing over maintenance when he was no longer interested.
-The parsing of answers from asterisk was completely rewritten. This
-should fix problems people were having with commands returning embedded
-'/' or empty lines. Some new manager commands added.
-
- - Add playdtmf manager command
- - add sippeers and sipshowpeer manager commands
- - rewritten manager communication
- - should no longer choke on '/' in answers returned from a manager
-   command (fixes SF Bug 2947866)
- - should now correctly parse multi-line output with embedded empty
-   lines, e.g. ``mgr.command('dialplan show')``
- - Bug-fix for list manipulation in ``event_dispatch``, thanks to Jan
-   Mueller, see mailinglist comment from 2008-04-18
- - Merge unreleased changes from repository of Matthew Nicholson
-   in particular a typo in ``agi.py`` for ``set_autohangup``, and change
-   of ``get_header`` methods (see Upgrading instructions). The fixed
-   ``manager.command`` support is already in (with a different
-   solution). The unreleased changes are also on the 0.2 branch in the
-   subversion repository in case somebody is interested.
-
-See the ChangeLog for older changes.

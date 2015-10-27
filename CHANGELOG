@@ -1,3 +1,23 @@
+2015-07-18  Artem Sorokin
+
+    * Fixing UTF-8 encoding issues.
+
+2015-07-15  Artem Sorokin
+
+    * Fix multiline command end marker for OpenVox GSM Gateway.
+
+2015-03-31  Randall Degges
+
+    * Porting packaging to setuptools (modern).
+    * Adding six as a dependency (it was missing before).
+
+2015-03-30  Areski Belaid
+
+    * Fixing the MANIFEST.in file I accidentally broke :)
+
+2015-03-29  Timur Tuchkovenko <eill@yandex.ru>
+    * UPGRADE: AMI fix for Python 3 compatibility.
+
 2014-10-08  Timur Tuchkovenko <eill@yandex.ru>
 	* UPGRADE: initial Python 3 support. Now pyst2 requires
 	  Python 'six' module. Some minor changes in other files.
