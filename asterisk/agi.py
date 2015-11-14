@@ -113,7 +113,7 @@ class AGI:
         sys.stderr.write('\n')
 
     def _quote(self, string):
-        return ''.join(['"', str(string), '"'])
+        return ''.join(['"', string.encode('ascii', 'ignore'), '"'])
 
     def _handle_sighup(self, signum, frame):
         """Handle the SIGHUP signal"""
