@@ -113,7 +113,7 @@ class AGI:
         sys.stderr.write('\n')
 
     def _quote(self, string):
-     """ provides double quotes to string, converts int/bool to string """
+        """ provides double quotes to string, converts int/bool to string """
         if isinstance(string, int):
           string = str(string)
         if isinstance(string, float):
