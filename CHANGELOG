@@ -1,3 +1,7 @@
+2015-11-14  Ben Davis <https://github.com/tuxpowered>
+
+    * Handling more UTF-8 encoding issues in `_quote` method.
+
 2015-07-18  Artem Sorokin
 
     * Fixing UTF-8 encoding issues.
