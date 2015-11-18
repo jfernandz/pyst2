@@ -98,7 +98,7 @@ asterisk FastAGI port. This does require the newest version of pyst2.
 The FastAGI server runs in as a Forked operation for each request, in
 an attempt to prevent blocking by a single bad service. As a result the
 FastAGI server may consume more memory then a single process. If you need
-to use a single process simply uncomment the approperate line. Future versions
+to use a single process simply uncomment the appropriate line. Future versions
 of this will use a config file to set options.
 
 Credits
