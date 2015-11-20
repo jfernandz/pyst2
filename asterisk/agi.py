@@ -8,9 +8,9 @@ pyvr
 {'agi_callerid' : 'mars.putland.int',
  'agi_channel'  : 'IAX[kputland@kputland]/119',
  'agi_context'  : 'default',
- 'agi_dnid'     : '666',
+ 'agi_dnid'     : '1000',
  'agi_enhanced' : '0.0',
- 'agi_extension': '666',
+ 'agi_extension': '1000',
  'agi_language' : 'en',
  'agi_priority' : '1',
  'agi_rdnis'    : '',
@@ -77,7 +77,7 @@ class AGIUsageError(AGIError):
 class AGIInvalidCommand(AGIError):
     pass
 
-
+        
 class AGI:
     """
     This class encapsulates communication between Asterisk an a python script.
@@ -85,21 +85,24 @@ class AGI:
     Asterisk.
     """
 
-    def __init__(self):
+    def __init__(self, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
         self._got_sighup = False
         signal.signal(signal.SIGHUP, self._handle_sighup)  # handle SIGHUP
-        sys.stderr.write('ARGS: ')
-        sys.stderr.write(str(sys.argv))
-        sys.stderr.write('\n')
+        self.stderr.write('ARGS: ')
+        self.stderr.write(str(sys.argv))
+        self.stderr.write('\n')
+        self.stdin = stdin
+        self.stdout = stdout
+        self.stderr = stderr
         self.env = {}
         self._get_agi_env()
 
     def _get_agi_env(self):
         while 1:
-            line = sys.stdin.readline().strip()
-            sys.stderr.write('ENV LINE: ')
-            sys.stderr.write(line)
-            sys.stderr.write('\n')
+            line = self.stdin.readline().strip()
+            self.stderr.write('ENV LINE: ')
+            self.stderr.write(line)
+            self.stderr.write('\n')
             if line == '':
                 #blank line signals end
                 break
@@ -108,9 +111,9 @@ class AGI:
             data = data.strip()
             if key != '':
                 self.env[key] = data
-        sys.stderr.write('class AGI: self.env = ')
-        sys.stderr.write(pprint.pformat(self.env))
-        sys.stderr.write('\n')
+        self.stderr.write('class AGI: self.env = ')
+        self.stderr.write(pprint.pformat(self.env))
+        self.stderr.write('\n')
 
     def _quote(self, string):
         """ provides double quotes to string, converts int/bool to string """
@@ -149,16 +152,16 @@ class AGI:
         command = command.strip()
         if command[-1] != '\n':
             command += '\n'
-        sys.stderr.write('    COMMAND: %s' % command)
-        sys.stdout.write(command)
-        sys.stdout.flush()
+        self.stderr.write('    COMMAND: %s' % command)
+        self.stdout.write(command)
+        self.stdout.flush()
 
     def get_result(self, stdin=sys.stdin):
         """Read the result of a command from Asterisk"""
         code = 0
         result = {'result': ('', '')}
-        line = stdin.readline().strip()
-        sys.stderr.write('    RESULT_LINE: %s\n' % line)
+        line = self.stdin.readline().strip()
+        self.stderr.write('    RESULT_LINE: %s\n' % line)
         m = re_code.search(line)
         if m:
             code, response = m.groups()
@@ -175,16 +178,16 @@ class AGI:
                 if key == 'result' and value == '-1':
                     raise AGIAppError("Error executing application, or hangup")
 
-            sys.stderr.write('    RESULT_DICT: %s\n' % pprint.pformat(result))
+            self.stderr.write('    RESULT_DICT: %s\n' % pprint.pformat(result))
             return result
         elif code == 510:
             raise AGIInvalidCommand(response)
         elif code == 520:
             usage = [line]
-            line = stdin.readline().strip()
+            line = self.stdin.readline().strip()
             while line[:3] != '520':
                 usage.append(line)
-                line = stdin.readline().strip()
+                line = self.stdin.readline().strip()
             usage.append(line)
             usage = '%s\n' % '\n'.join(usage)
             raise AGIUsageError(usage)
