@@ -86,14 +86,14 @@ class AGI:
     """
 
     def __init__(self, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
+        self.stdin = stdin
+        self.stdout = stdout
+        self.stderr = stderr
         self._got_sighup = False
         signal.signal(signal.SIGHUP, self._handle_sighup)  # handle SIGHUP
         self.stderr.write('ARGS: ')
         self.stderr.write(str(sys.argv))
         self.stderr.write('\n')
-        self.stdin = stdin
-        self.stdout = stdout
-        self.stderr = stderr
         self.env = {}
         self._get_agi_env()
 
