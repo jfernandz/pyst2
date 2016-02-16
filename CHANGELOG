@@ -1,3 +1,8 @@
+2016-02-16  Randall Degges <https://github.com/rdegges>
+
+    * Fixing issue in AGI class init function. Thanks to @sancho2934489 for the
+      find!
+
 2015-11-16  Scinawa Antani <https://github.com/Scinawa>
 
     * Fixing indentation errors.
