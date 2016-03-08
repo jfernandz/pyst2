@@ -1,9 +1,17 @@
 #!/usr/bin/env python
-# FastAGI service for Asterisk
-# Requires modified pyst2 to support reading stdin/out/err
-# 
-# Copyright 2011 VOICE1, LLC
-# By: Ben Davis <ben@voice1-dot-me>
+
+"""
+.. module:: fastagi
+   :synopsis: FastAGI service for Asterisk
+
+Requires modified pyst2 to support reading stdin/out/err
+ 
+ Copyright 2011 VOICE1, LLC
+ By: Ben Davis <ben@voice1-dot-me>
+
+Specification
+-------------
+"""
 
 import sys
 import SocketServer

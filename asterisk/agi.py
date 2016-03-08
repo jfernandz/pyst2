@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 # vim: set et sw=4:
-"""agi
-
-This module contains functions and classes to implment AGI scripts in python.
+"""
+.. module:: agi
+   :synopsis: This module contains functions and classes to implment AGI scripts in python. 
+   
 pyvr
 
 {'agi_callerid' : 'mars.putland.int',
@@ -17,6 +18,8 @@ pyvr
  'agi_request'  : 'pyst',
  'agi_type'     : 'IAX'}
 
+Specification
+-------------
 """
 
 import sys

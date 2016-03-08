@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 # vim: set expandtab:
 """
-Parse Asterisk configuration files.
+.. module:: config
+   :synopsis: Parse Asterisk configuration files.
 
 This module provides parsing functionality for asterisk config files.
 
+Example
+----------
+
+.. code-block:: python
+
    import asterisk.config
    import sys
-
+   
    # load and parse the config file
    try:
       config = asterisk.config.Config('/etc/asterisk/extensions.conf')
@@ -17,13 +23,17 @@ This module provides parsing functionality for asterisk config files.
    except IOError as e:
       print "Error opening file: %s" % e.strerror
       sys.exit(1)
-
+   
    # print our parsed output
    for category in config.categories:
       print '[%s]' % category.name   # print the current category
 
       for item in category.items:
          print '   %s = %s' % (item.name, item.value)
+
+
+Specification
+-------------
 """
 
 import sys

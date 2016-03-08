@@ -1,20 +1,27 @@
-"""More comprehensive traceback formatting for Python scripts.
+"""
+.. module:: agitb
+   :synopsis: More comprehensive traceback formatting for Python scripts.
+
+Example
+-------
 
 To enable this module, do:
 
-    import asterisk.agitb, asterisk.agi
-    asterisk.agitb.enable(display = False, logdir = '/var/log/asterisk/')
+.. code-block:: python
 
-    agi = asterisk.agi.AGI()
-    asterisk.agitb.enable(agi, False, '/var/log/asterisk')
+   import asterisk.agitb, asterisk.agi
+   asterisk.agitb.enable(display = False, logdir = '/var/log/asterisk/')
+
+   agi = asterisk.agi.AGI()
+   asterisk.agitb.enable(agi, False, '/var/log/asterisk')
 
 at the top of your script.  The optional arguments to enable() are:
 
-    agi         - the agi handle to write verbose messages to
-    display     - if true, tracebacks are displayed on the asterisk console
-                  (used with the agi option)
-    logdir      - if set, tracebacks are written to files in this directory
-    context     - number of lines of source code to show for each stack frame
+* agi         - the agi handle to write verbose messages to
+* display     - if true, tracebacks are displayed on the asterisk console
+  (used with the agi option)
+* logdir      - if set, tracebacks are written to files in this directory
+* context     - number of lines of source code to show for each stack frame
 
 By default, tracebacks are displayed but not saved, and the context is 5 lines.
 
@@ -27,6 +34,9 @@ for you, call agitb.handler().  The optional argument to handler() is a
 If you do not pass anything to handler() it will use sys.exc_info().
 
 This script was adapted from Ka-Ping Yee's cgitb.
+
+Specification
+-------------
 """
 
 __author__ = 'Matthew Nicholson'
