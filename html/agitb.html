@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AGITB &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="index.html" />
+    <link rel="next" title="Config" href="config.html" />
+    <link rel="prev" title="AGI" href="agi.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-asterisk.agitb">
+<span id="agitb"></span><h1>AGITB<a class="headerlink" href="#module-asterisk.agitb" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-agi"></span><div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>To enable this module, do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asterisk.agitb</span><span class="o">,</span> <span class="nn">asterisk.agi</span>
+<span class="n">asterisk</span><span class="o">.</span><span class="n">agitb</span><span class="o">.</span><span class="n">enable</span><span class="p">(</span><span class="n">display</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">logdir</span> <span class="o">=</span> <span class="s1">&#39;/var/log/asterisk/&#39;</span><span class="p">)</span>
+
+<span class="n">agi</span> <span class="o">=</span> <span class="n">asterisk</span><span class="o">.</span><span class="n">agi</span><span class="o">.</span><span class="n">AGI</span><span class="p">()</span>
+<span class="n">asterisk</span><span class="o">.</span><span class="n">agitb</span><span class="o">.</span><span class="n">enable</span><span class="p">(</span><span class="n">agi</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s1">&#39;/var/log/asterisk&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>at the top of your script.  The optional arguments to enable() are:</p>
+<ul class="simple">
+<li>agi         - the agi handle to write verbose messages to</li>
+<li>display     - if true, tracebacks are displayed on the asterisk console
+(used with the agi option)</li>
+<li>logdir      - if set, tracebacks are written to files in this directory</li>
+<li>context     - number of lines of source code to show for each stack frame</li>
+</ul>
+<p>By default, tracebacks are displayed but not saved, and the context is 5 lines.</p>
+<p>You may want to add a logdir if you call agitb.enable() before you have
+an agi.AGI() handle.</p>
+<p>Alternatively, if you have caught an exception and want agitb to display it
+for you, call agitb.handler().  The optional argument to handler() is a
+3-item tuple (etype, evalue, etb) just like the value of sys.exc_info().
+If you do not pass anything to handler() it will use sys.exc_info().</p>
+<p>This script was adapted from Ka-Ping Yee&#8217;s cgitb.</p>
+</div>
+<div class="section" id="specification">
+<h2>Specification<a class="headerlink" href="#specification" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="asterisk.agitb.Hook">
+<em class="property">class </em><code class="descclassname">asterisk.agitb.</code><code class="descname">Hook</code><span class="sig-paren">(</span><em>display=1</em>, <em>logdir=None</em>, <em>context=5</em>, <em>file=None</em>, <em>agi=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agitb.html#Hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agitb.Hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>A hook to replace sys.excepthook that shows tracebacks in HTML.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asterisk.agitb.enable">
+<code class="descclassname">asterisk.agitb.</code><code class="descname">enable</code><span class="sig-paren">(</span><em>agi=None</em>, <em>display=1</em>, <em>logdir=None</em>, <em>context=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agitb.html#enable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agitb.enable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install an exception handler that formats tracebacks as HTML.</p>
+<p>The optional argument &#8216;display&#8217; can be set to 0 to suppress sending the
+traceback to the browser, and &#8216;logdir&#8217; can be set to a directory to cause
+tracebacks to be written to files there.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asterisk.agitb.lookup">
+<code class="descclassname">asterisk.agitb.</code><code class="descname">lookup</code><span class="sig-paren">(</span><em>name</em>, <em>frame</em>, <em>locals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agitb.html#lookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agitb.lookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the value for a given name in the given environment.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asterisk.agitb.scanvars">
+<code class="descclassname">asterisk.agitb.</code><code class="descname">scanvars</code><span class="sig-paren">(</span><em>reader</em>, <em>frame</em>, <em>locals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agitb.html#scanvars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agitb.scanvars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan one logical line of Python and look up values of variables used.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asterisk.agitb.text">
+<code class="descclassname">asterisk.agitb.</code><code class="descname">text</code><span class="sig-paren">(</span><em>eparams</em>, <em>context=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agitb.html#text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agitb.text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a plain text document describing a given traceback.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">AGITB</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#specification">Specification</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="agi.html" title="previous chapter">AGI</a></li>
+      <li>Next: <a href="config.html" title="next chapter">Config</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/agitb.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/agitb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

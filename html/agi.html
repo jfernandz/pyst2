@@ -1,0 +1,460 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AGI &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="index.html" />
+    <link rel="next" title="AGITB" href="agitb.html" />
+    <link rel="prev" title="pyst2: A Python Interface to Asterisk" href="readme.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-asterisk.agi">
+<span id="agi"></span><h1>AGI<a class="headerlink" href="#module-asterisk.agi" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-agi"></span><p>pyvr</p>
+<dl class="docutils">
+<dt>{&#8216;agi_callerid&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">&#8216;mars.putland.int&#8217;,</span></dt>
+<dd>&#8216;agi_channel&#8217;  : &#8216;IAX[<a class="reference external" href="mailto:kputland&#37;&#52;&#48;kputland">kputland<span>&#64;</span>kputland</a>]/119&#8217;,
+&#8216;agi_context&#8217;  : &#8216;default&#8217;,
+&#8216;agi_dnid&#8217;     : &#8216;1000&#8217;,
+&#8216;agi_enhanced&#8217; : &#8216;0.0&#8217;,
+&#8216;agi_extension&#8217;: &#8216;1000&#8217;,
+&#8216;agi_language&#8217; : &#8216;en&#8217;,
+&#8216;agi_priority&#8217; : &#8216;1&#8217;,
+&#8216;agi_rdnis&#8217;    : &#8216;&#8217;,
+&#8216;agi_request&#8217;  : &#8216;pyst&#8217;,
+&#8216;agi_type&#8217;     : &#8216;IAX&#8217;}</dd>
+</dl>
+<div class="section" id="specification">
+<h2>Specification<a class="headerlink" href="#specification" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="asterisk.agi.AGI">
+<em class="property">class </em><code class="descclassname">asterisk.agi.</code><code class="descname">AGI</code><span class="sig-paren">(</span><em>stdin=&lt;open file '&lt;stdin&gt;'</em>, <em>mode 'r'&gt;</em>, <em>stdout=&lt;open file '&lt;stdout&gt;'</em>, <em>mode 'w'&gt;</em>, <em>stderr=&lt;open file '&lt;stderr&gt;'</em>, <em>mode 'w'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class encapsulates communication between Asterisk an a python script.
+It handles encoding commands to Asterisk and parsing responses from
+Asterisk.</p>
+<dl class="method">
+<dt id="asterisk.agi.AGI.answer">
+<code class="descname">answer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.answer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.answer() &#8211;&gt; None
+Answer channel if not already in answer state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.appexec">
+<code class="descname">appexec</code><span class="sig-paren">(</span><em>application</em>, <em>options=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.appexec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.appexec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes &lt;application&gt; with given &lt;options&gt;.
+Returns whatever the application returns, or -2 on failure to find
+application</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.channel_status">
+<code class="descname">channel_status</code><span class="sig-paren">(</span><em>channel=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.channel_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.channel_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.channel_status(channel=&#8217;&#8216;) &#8211;&gt; int
+Returns the status of the specified channel.  If no channel name is
+given the returns the status of the current channel.</p>
+<p>Return values:
+0 Channel is down and available
+1 Channel is down, but reserved
+2 Channel is off hook
+3 Digits (or equivalent) have been dialed
+4 Line is ringing
+5 Remote end is ringing
+6 Line is up
+7 Line is busy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.control_stream_file">
+<code class="descname">control_stream_file</code><span class="sig-paren">(</span><em>filename</em>, <em>escape_digits=''</em>, <em>skipms=3000</em>, <em>fwd=''</em>, <em>rew=''</em>, <em>pause=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.control_stream_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.control_stream_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send the given file, allowing playback to be interrupted by the given
+digits, if any.  escape_digits is a string &#8216;12345&#8217; or a list  of
+ints [1,2,3,4,5] or strings [&#8216;1&#8217;,&#8216;2&#8217;,&#8216;3&#8217;] or mixed [1,&#8216;2&#8217;,3,&#8216;4&#8217;]
+If sample offset is provided then the audio will seek to sample
+offset before play starts.  Returns  digit if one was pressed.
+Throws AGIError if the channel was disconnected.  Remember, the file
+extension must not be included in the filename.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.database_del">
+<code class="descname">database_del</code><span class="sig-paren">(</span><em>family</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.database_del"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.database_del" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.database_del(family, key) &#8211;&gt; None
+Deletes an entry in the Asterisk database for a
+given family and key.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.database_deltree">
+<code class="descname">database_deltree</code><span class="sig-paren">(</span><em>family</em>, <em>key=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.database_deltree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.database_deltree" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.database_deltree(family, key=&#8217;&#8216;) &#8211;&gt; None
+Deletes a family or specific keytree with in a family
+in the Asterisk database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.database_get">
+<code class="descname">database_get</code><span class="sig-paren">(</span><em>family</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.database_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.database_get" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.database_get(family, key) &#8211;&gt; str
+Retrieves an entry in the Asterisk database for a given family and key.
+Returns 0 if &lt;key&gt; is not set.  Returns 1 if &lt;key&gt;
+is set and returns the variable in parenthesis
+example return code: 200 result=1 (testvariable)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.database_put">
+<code class="descname">database_put</code><span class="sig-paren">(</span><em>family</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.database_put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.database_put" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.database_put(family, key, value) &#8211;&gt; None
+Adds or updates an entry in the Asterisk database for a
+given family, key, and value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><em>filename</em>, <em>timeout=2000</em>, <em>max_digits=255</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.get_data(filename, timeout=DEFAULT_TIMEOUT, max_digits=255) &#8211;&gt; digits
+Stream the given file and receive dialed digits</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.get_full_variable">
+<code class="descname">get_full_variable</code><span class="sig-paren">(</span><em>name</em>, <em>channel=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.get_full_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.get_full_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a channel variable.</p>
+<p>This function returns the value of the indicated channel variable.  If
+the variable is not set, an empty string is returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.get_option">
+<code class="descname">get_option</code><span class="sig-paren">(</span><em>filename</em>, <em>escape_digits=''</em>, <em>timeout=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.get_option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.get_option" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.get_option(filename, escape_digits=&#8217;&#8216;, timeout=0) &#8211;&gt; digit
+Send the given file, allowing playback to be interrupted by the given
+digits, if any.  escape_digits is a string &#8216;12345&#8217; or a list  of
+ints [1,2,3,4,5] or strings [&#8216;1&#8217;,&#8216;2&#8217;,&#8216;3&#8217;] or mixed [1,&#8216;2&#8217;,3,&#8216;4&#8217;]
+Returns  digit if one was pressed.
+Throws AGIError if the channel was disconnected.  Remember, the file
+extension must not be included in the filename.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.get_result">
+<code class="descname">get_result</code><span class="sig-paren">(</span><em>stdin=&lt;open file '&lt;stdin&gt;'</em>, <em>mode 'r'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.get_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.get_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the result of a command from Asterisk</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.get_variable">
+<code class="descname">get_variable</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.get_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.get_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a channel variable.</p>
+<p>This function returns the value of the indicated channel variable.  If
+the variable is not set, an empty string is returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.hangup">
+<code class="descname">hangup</code><span class="sig-paren">(</span><em>channel=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.hangup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.hangup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hangs up the specified channel.
+If no channel name is given, hangs up the current channel</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.noop">
+<code class="descname">noop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.noop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.noop" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.noop() &#8211;&gt; None
+Does nothing</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.receive_char">
+<code class="descname">receive_char</code><span class="sig-paren">(</span><em>timeout=2000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.receive_char"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.receive_char" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.receive_char(timeout=DEFAULT_TIMEOUT) &#8211;&gt; chr
+Receives a character of text on a channel.  Specify timeout to be the
+maximum time to wait for input in milliseconds, or 0 for infinite. Most channels
+do not support the reception of text.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.record_file">
+<code class="descname">record_file</code><span class="sig-paren">(</span><em>filename</em>, <em>format='gsm'</em>, <em>escape_digits='#'</em>, <em>timeout=20000</em>, <em>offset=0</em>, <em>beep='beep'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.record_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.record_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.record_file(filename, format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep=&#8217;beep&#8217;) &#8211;&gt; None
+Record to a file until a given dtmf digit in the sequence is received
+The format will specify what kind of file will be recorded.  The timeout
+is the maximum record time in milliseconds, or -1 for no timeout. Offset
+samples is optional, and if provided will seek to the offset without
+exceeding the end of the file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_alpha">
+<code class="descname">say_alpha</code><span class="sig-paren">(</span><em>characters</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_alpha"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_alpha(string, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Say a given character string, returning early if any of the given DTMF
+digits are received on the channel.
+Throws AGIError on channel failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_date">
+<code class="descname">say_date</code><span class="sig-paren">(</span><em>seconds</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_date(seconds, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Say a given date, returning early if any of the given DTMF digits are
+pressed.  The date should be in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_datetime">
+<code class="descname">say_datetime</code><span class="sig-paren">(</span><em>seconds</em>, <em>escape_digits=''</em>, <em>format=''</em>, <em>zone=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_datetime(seconds, escape_digits=&#8217;&#8216;, format=&#8217;&#8216;, zone=&#8217;&#8216;) &#8211;&gt; digit
+Say a given date in the format specfied (see voicemail.conf), returning
+early if any of the given DTMF digits are pressed.  The date should be
+in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_digits">
+<code class="descname">say_digits</code><span class="sig-paren">(</span><em>digits</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_digits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_digits" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_digits(digits, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Say a given digit string, returning early if any of the given DTMF digits
+are received on the channel.
+Throws AGIError on channel failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_number">
+<code class="descname">say_number</code><span class="sig-paren">(</span><em>number</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_number(number, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Say a given digit string, returning early if any of the given DTMF digits
+are received on the channel.
+Throws AGIError on channel failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_phonetic">
+<code class="descname">say_phonetic</code><span class="sig-paren">(</span><em>characters</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_phonetic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_phonetic" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_phonetic(string, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Phonetically say a given character string, returning early if any of
+the given DTMF digits are received on the channel.
+Throws AGIError on channel failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.say_time">
+<code class="descname">say_time</code><span class="sig-paren">(</span><em>seconds</em>, <em>escape_digits=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.say_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.say_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.say_time(seconds, escape_digits=&#8217;&#8216;) &#8211;&gt; digit
+Say a given time, returning early if any of the given DTMF digits are
+pressed.  The time should be in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.send_command">
+<code class="descname">send_command</code><span class="sig-paren">(</span><em>command</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.send_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.send_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a command to Asterisk</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.send_image">
+<code class="descname">send_image</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.send_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.send_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.send_image(filename) &#8211;&gt; None
+Sends the given image on a channel.  Most channels do not support the
+transmission of images.   Image names should not include extensions.
+Throws AGIError on channel failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.send_text">
+<code class="descname">send_text</code><span class="sig-paren">(</span><em>text=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.send_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.send_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.send_text(text=&#8217;&#8216;) &#8211;&gt; None
+Sends the given text on a channel.  Most channels do not support the
+transmission of text.
+Throws AGIError on error/hangup</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_autohangup">
+<code class="descname">set_autohangup</code><span class="sig-paren">(</span><em>secs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_autohangup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_autohangup" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.set_autohangup(secs) &#8211;&gt; None
+Cause the channel to automatically hangup at &lt;secs&gt; seconds in the
+future.  Of course it can be hungup before then as well.   Setting to
+0 will cause the autohangup feature to be disabled on this channel.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_callerid">
+<code class="descname">set_callerid</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_callerid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_callerid" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.set_callerid(number) &#8211;&gt; None
+Changes the callerid of the current channel.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_context">
+<code class="descname">set_context</code><span class="sig-paren">(</span><em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the context for continuation upon exiting the application.
+No error appears to be produced.  Does not set exten or priority
+Use at your own risk.  Ensure that you specify a valid context.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_extension">
+<code class="descname">set_extension</code><span class="sig-paren">(</span><em>extension</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_extension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the extension for continuation upon exiting the application.
+No error appears to be produced.  Does not set context or priority
+Use at your own risk.  Ensure that you specify a valid extension.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_priority">
+<code class="descname">set_priority</code><span class="sig-paren">(</span><em>priority</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_priority"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_priority" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the priority for continuation upon exiting the application.
+No error appears to be produced.  Does not set exten or context
+Use at your own risk.  Ensure that you specify a valid priority.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.set_variable">
+<code class="descname">set_variable</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.set_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.set_variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a channel variable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.stream_file">
+<code class="descname">stream_file</code><span class="sig-paren">(</span><em>filename</em>, <em>escape_digits=''</em>, <em>sample_offset=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.stream_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.stream_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.stream_file(filename, escape_digits=&#8217;&#8216;, sample_offset=0) &#8211;&gt; digit
+Send the given file, allowing playback to be interrupted by the given
+digits, if any.  escape_digits is a string &#8216;12345&#8217; or a list  of
+ints [1,2,3,4,5] or strings [&#8216;1&#8217;,&#8216;2&#8217;,&#8216;3&#8217;] or mixed [1,&#8216;2&#8217;,3,&#8216;4&#8217;]
+If sample offset is provided then the audio will seek to sample
+offset before play starts.  Returns  digit if one was pressed.
+Throws AGIError if the channel was disconnected.  Remember, the file
+extension must not be included in the filename.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.tdd_mode">
+<code class="descname">tdd_mode</code><span class="sig-paren">(</span><em>mode='off'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.tdd_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.tdd_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.tdd_mode(mode=&#8217;on&#8217;|&#8217;off&#8217;) &#8211;&gt; None
+Enable/Disable TDD transmission/reception on a channel.
+Throws AGIAppError if channel is not TDD-capable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.test_hangup">
+<code class="descname">test_hangup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.test_hangup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.test_hangup" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function throws AGIHangup if we have recieved a SIGHUP</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.verbose">
+<code class="descname">verbose</code><span class="sig-paren">(</span><em>message</em>, <em>level=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.verbose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.verbose" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.verbose(message=&#8217;&#8216;, level=1) &#8211;&gt; None
+Sends &lt;message&gt; to the console via verbose message system.
+&lt;level&gt; is the the verbose level (1-4)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.agi.AGI.wait_for_digit">
+<code class="descname">wait_for_digit</code><span class="sig-paren">(</span><em>timeout=2000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/agi.html#AGI.wait_for_digit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.agi.AGI.wait_for_digit" title="Permalink to this definition">¶</a></dt>
+<dd><p>agi.wait_for_digit(timeout=DEFAULT_TIMEOUT) &#8211;&gt; digit
+Waits for up to &#8216;timeout&#8217; milliseconds for a channel to receive a DTMF
+digit.  Returns digit dialed
+Throws AGIError on channel falure</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">AGI</a><ul>
+<li><a class="reference internal" href="#specification">Specification</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="readme.html" title="previous chapter">pyst2: A Python Interface to Asterisk</a></li>
+      <li>Next: <a href="agitb.html" title="next chapter">AGITB</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/agi.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/agi.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

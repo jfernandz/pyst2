@@ -1,0 +1,808 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asterisk.agi &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for asterisk.agi</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python2</span>
+<span class="c1"># vim: set et sw=4:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: agi</span>
+<span class="sd">   :synopsis: This module contains functions and classes to implment AGI scripts in python. </span>
+<span class="sd">   </span>
+<span class="sd">pyvr</span>
+
+<span class="sd">{&#39;agi_callerid&#39; : &#39;mars.putland.int&#39;,</span>
+<span class="sd"> &#39;agi_channel&#39;  : &#39;IAX[kputland@kputland]/119&#39;,</span>
+<span class="sd"> &#39;agi_context&#39;  : &#39;default&#39;,</span>
+<span class="sd"> &#39;agi_dnid&#39;     : &#39;1000&#39;,</span>
+<span class="sd"> &#39;agi_enhanced&#39; : &#39;0.0&#39;,</span>
+<span class="sd"> &#39;agi_extension&#39;: &#39;1000&#39;,</span>
+<span class="sd"> &#39;agi_language&#39; : &#39;en&#39;,</span>
+<span class="sd"> &#39;agi_priority&#39; : &#39;1&#39;,</span>
+<span class="sd"> &#39;agi_rdnis&#39;    : &#39;&#39;,</span>
+<span class="sd"> &#39;agi_request&#39;  : &#39;pyst&#39;,</span>
+<span class="sd"> &#39;agi_type&#39;     : &#39;IAX&#39;}</span>
+
+<span class="sd">Specification</span>
+<span class="sd">-------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+
+<span class="n">DEFAULT_TIMEOUT</span> <span class="o">=</span> <span class="mi">2000</span>  <span class="c1"># 2sec timeout used as default for functions that take timeouts</span>
+<span class="n">DEFAULT_RECORD</span> <span class="o">=</span> <span class="mi">20000</span>  <span class="c1"># 20sec record time</span>
+
+<span class="n">re_code</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;(^\d*)\s*(.*)&#39;</span><span class="p">)</span>
+<span class="n">re_kv</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;(?P&lt;key&gt;\w+)=(?P&lt;value&gt;[^\s]+)\s*(?:\((?P&lt;data&gt;.*)\))*&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">AGIException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIError</span><span class="p">(</span><span class="n">AGIException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIUnknownError</span><span class="p">(</span><span class="n">AGIError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIAppError</span><span class="p">(</span><span class="n">AGIError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c1"># there are several different types of hangups we can detect</span>
+<span class="c1"># they all are derrived from AGIHangup</span>
+
+
+<span class="k">class</span> <span class="nc">AGIHangup</span><span class="p">(</span><span class="n">AGIAppError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGISIGHUPHangup</span><span class="p">(</span><span class="n">AGIHangup</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGISIGPIPEHangup</span><span class="p">(</span><span class="n">AGIHangup</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIResultHangup</span><span class="p">(</span><span class="n">AGIHangup</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIDBError</span><span class="p">(</span><span class="n">AGIAppError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIUsageError</span><span class="p">(</span><span class="n">AGIError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">AGIInvalidCommand</span><span class="p">(</span><span class="n">AGIError</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+        
+<div class="viewcode-block" id="AGI"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI">[docs]</a><span class="k">class</span> <span class="nc">AGI</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class encapsulates communication between Asterisk an a python script.</span>
+<span class="sd">    It handles encoding commands to Asterisk and parsing responses from</span>
+<span class="sd">    Asterisk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stdin</span> <span class="o">=</span> <span class="n">stdin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">stdout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">stderr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_got_sighup</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGHUP</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_sighup</span><span class="p">)</span>  <span class="c1"># handle SIGHUP</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;ARGS: &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_agi_env</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_agi_env</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;ENV LINE: &#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="c1">#blank line signals end</span>
+                <span class="k">break</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;class AGI: self.env = &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_quote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; provides double quotes to string, converts int/bool to string &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+          <span class="n">string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+          <span class="n">string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">),</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_handle_sighup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signum</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Handle the SIGHUP signal&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_got_sighup</span> <span class="o">=</span> <span class="bp">True</span>
+
+<div class="viewcode-block" id="AGI.test_hangup"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.test_hangup">[docs]</a>    <span class="k">def</span> <span class="nf">test_hangup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This function throws AGIHangup if we have recieved a SIGHUP&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_got_sighup</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGISIGHUPHangup</span><span class="p">(</span><span class="s2">&quot;Received SIGHUP from Asterisk&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_hangup</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">32</span><span class="p">:</span>
+                <span class="c1"># Broken Pipe * let us go</span>
+                <span class="k">raise</span> <span class="n">AGISIGPIPEHangup</span><span class="p">(</span><span class="s2">&quot;Received SIGPIPE&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+<div class="viewcode-block" id="AGI.send_command"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.send_command">[docs]</a>    <span class="k">def</span> <span class="nf">send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send a command to Asterisk&quot;&quot;&quot;</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)))</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">command</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;    COMMAND: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">command</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AGI.get_result"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.get_result">[docs]</a>    <span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read the result of a command from Asterisk&quot;&quot;&quot;</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)}</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;    RESULT_LINE: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">line</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re_code</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">response</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">re_kv</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+                <span class="c1"># If user hangs up... we get &#39;hangup&#39; in the data</span>
+                <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;hangup&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">AGIResultHangup</span><span class="p">(</span><span class="s2">&quot;User hungup during execution&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;result&#39;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;-1&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">AGIAppError</span><span class="p">(</span><span class="s2">&quot;Error executing application, or hangup&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;    RESULT_DICT: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">510</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIInvalidCommand</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">520</span><span class="p">:</span>
+            <span class="n">usage</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="p">]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;520&#39;</span><span class="p">:</span>
+                <span class="n">usage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">usage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">usage</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">usage</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">AGIUsageError</span><span class="p">(</span><span class="n">usage</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIUnknownError</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s1">&#39;Unhandled code or undefined response&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_process_digit_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">digits</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">digits</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AGI.answer"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.answer">[docs]</a>    <span class="k">def</span> <span class="nf">answer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.answer() --&gt; None</span>
+<span class="sd">        Answer channel if not already in answer state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;ANSWER&#39;</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AGI.wait_for_digit"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.wait_for_digit">[docs]</a>    <span class="k">def</span> <span class="nf">wait_for_digit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">DEFAULT_TIMEOUT</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.wait_for_digit(timeout=DEFAULT_TIMEOUT) --&gt; digit</span>
+<span class="sd">        Waits for up to &#39;timeout&#39; milliseconds for a channel to receive a DTMF</span>
+<span class="sd">        digit.  Returns digit dialed</span>
+<span class="sd">        Throws AGIError on channel falure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;WAIT FOR DIGIT&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to digit: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.send_text"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.send_text">[docs]</a>    <span class="k">def</span> <span class="nf">send_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.send_text(text=&#39;&#39;) --&gt; None</span>
+<span class="sd">        Sends the given text on a channel.  Most channels do not support the</span>
+<span class="sd">        transmission of text.</span>
+<span class="sd">        Throws AGIError on error/hangup</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SEND TEXT&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">text</span><span class="p">))[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AGI.receive_char"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.receive_char">[docs]</a>    <span class="k">def</span> <span class="nf">receive_char</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">DEFAULT_TIMEOUT</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.receive_char(timeout=DEFAULT_TIMEOUT) --&gt; chr</span>
+<span class="sd">        Receives a character of text on a channel.  Specify timeout to be the</span>
+<span class="sd">        maximum time to wait for input in milliseconds, or 0 for infinite. Most channels</span>
+<span class="sd">        do not support the reception of text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;RECEIVE CHAR&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.tdd_mode"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.tdd_mode">[docs]</a>    <span class="k">def</span> <span class="nf">tdd_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.tdd_mode(mode=&#39;on&#39;|&#39;off&#39;) --&gt; None</span>
+<span class="sd">        Enable/Disable TDD transmission/reception on a channel.</span>
+<span class="sd">        Throws AGIAppError if channel is not TDD-capable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;TDD MODE&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIAppError</span><span class="p">(</span><span class="s1">&#39;Channel </span><span class="si">%s</span><span class="s1"> is not TDD-capable&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.stream_file"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.stream_file">[docs]</a>    <span class="k">def</span> <span class="nf">stream_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">sample_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.stream_file(filename, escape_digits=&#39;&#39;, sample_offset=0) --&gt; digit</span>
+<span class="sd">        Send the given file, allowing playback to be interrupted by the given</span>
+<span class="sd">        digits, if any.  escape_digits is a string &#39;12345&#39; or a list  of</span>
+<span class="sd">        ints [1,2,3,4,5] or strings [&#39;1&#39;,&#39;2&#39;,&#39;3&#39;] or mixed [1,&#39;2&#39;,3,&#39;4&#39;]</span>
+<span class="sd">        If sample offset is provided then the audio will seek to sample</span>
+<span class="sd">        offset before play starts.  Returns  digit if one was pressed.</span>
+<span class="sd">        Throws AGIError if the channel was disconnected.  Remember, the file</span>
+<span class="sd">        extension must not be included in the filename.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;STREAM FILE&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">,</span> <span class="n">sample_offset</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.control_stream_file"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.control_stream_file">[docs]</a>    <span class="k">def</span> <span class="nf">control_stream_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">skipms</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">fwd</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">rew</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">pause</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send the given file, allowing playback to be interrupted by the given</span>
+<span class="sd">        digits, if any.  escape_digits is a string &#39;12345&#39; or a list  of</span>
+<span class="sd">        ints [1,2,3,4,5] or strings [&#39;1&#39;,&#39;2&#39;,&#39;3&#39;] or mixed [1,&#39;2&#39;,3,&#39;4&#39;]</span>
+<span class="sd">        If sample offset is provided then the audio will seek to sample</span>
+<span class="sd">        offset before play starts.  Returns  digit if one was pressed.</span>
+<span class="sd">        Throws AGIError if the channel was disconnected.  Remember, the file</span>
+<span class="sd">        extension must not be included in the filename.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;CONTROL STREAM FILE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="n">escape_digits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">skipms</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">fwd</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">rew</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">pause</span><span class="p">))</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.send_image"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.send_image">[docs]</a>    <span class="k">def</span> <span class="nf">send_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.send_image(filename) --&gt; None</span>
+<span class="sd">        Sends the given image on a channel.  Most channels do not support the</span>
+<span class="sd">        transmission of images.   Image names should not include extensions.</span>
+<span class="sd">        Throws AGIError on channel failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SEND IMAGE&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIAppError</span><span class="p">(</span><span class="s1">&#39;Channel falure on channel </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;agi_channel&#39;</span><span class="p">,</span> <span class="s1">&#39;UNKNOWN&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AGI.say_digits"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_digits">[docs]</a>    <span class="k">def</span> <span class="nf">say_digits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_digits(digits, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given digit string, returning early if any of the given DTMF digits</span>
+<span class="sd">        are received on the channel.</span>
+<span class="sd">        Throws AGIError on channel failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SAY DIGITS&#39;</span><span class="p">,</span> <span class="n">digits</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_number"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_number">[docs]</a>    <span class="k">def</span> <span class="nf">say_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_number(number, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given digit string, returning early if any of the given DTMF digits</span>
+<span class="sd">        are received on the channel.</span>
+<span class="sd">        Throws AGIError on channel failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SAY NUMBER&#39;</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_alpha"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_alpha">[docs]</a>    <span class="k">def</span> <span class="nf">say_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">characters</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_alpha(string, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given character string, returning early if any of the given DTMF</span>
+<span class="sd">        digits are received on the channel.</span>
+<span class="sd">        Throws AGIError on channel failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">characters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">characters</span><span class="p">)</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SAY ALPHA&#39;</span><span class="p">,</span> <span class="n">characters</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_phonetic"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_phonetic">[docs]</a>    <span class="k">def</span> <span class="nf">say_phonetic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">characters</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_phonetic(string, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Phonetically say a given character string, returning early if any of</span>
+<span class="sd">        the given DTMF digits are received on the channel.</span>
+<span class="sd">        Throws AGIError on channel failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">characters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">characters</span><span class="p">)</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;SAY PHONETIC&#39;</span><span class="p">,</span> <span class="n">characters</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_date"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_date">[docs]</a>    <span class="k">def</span> <span class="nf">say_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_date(seconds, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given date, returning early if any of the given DTMF digits are</span>
+<span class="sd">        pressed.  The date should be in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SAY DATE&#39;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_time"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_time">[docs]</a>    <span class="k">def</span> <span class="nf">say_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_time(seconds, escape_digits=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given time, returning early if any of the given DTMF digits are</span>
+<span class="sd">        pressed.  The time should be in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SAY TIME&#39;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.say_datetime"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.say_datetime">[docs]</a>    <span class="k">def</span> <span class="nf">say_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.say_datetime(seconds, escape_digits=&#39;&#39;, format=&#39;&#39;, zone=&#39;&#39;) --&gt; digit</span>
+<span class="sd">        Say a given date in the format specfied (see voicemail.conf), returning</span>
+<span class="sd">        early if any of the given DTMF digits are pressed.  The date should be</span>
+<span class="sd">        in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">format</span><span class="p">:</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">format</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;SAY DATETIME&#39;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">zone</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.get_data"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">255</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.get_data(filename, timeout=DEFAULT_TIMEOUT, max_digits=255) --&gt; digits</span>
+<span class="sd">        Stream the given file and receive dialed digits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;GET DATA&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">max_digits</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="AGI.get_option"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.get_option">[docs]</a>    <span class="k">def</span> <span class="nf">get_option</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.get_option(filename, escape_digits=&#39;&#39;, timeout=0) --&gt; digit</span>
+<span class="sd">        Send the given file, allowing playback to be interrupted by the given</span>
+<span class="sd">        digits, if any.  escape_digits is a string &#39;12345&#39; or a list  of</span>
+<span class="sd">        ints [1,2,3,4,5] or strings [&#39;1&#39;,&#39;2&#39;,&#39;3&#39;] or mixed [1,&#39;2&#39;,3,&#39;4&#39;]</span>
+<span class="sd">        Returns  digit if one was pressed.</span>
+<span class="sd">        Throws AGIError if the channel was disconnected.  Remember, the file</span>
+<span class="sd">        extension must not be included in the filename.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s1">&#39;GET OPTION&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;GET OPTION&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">escape_digits</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to char: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.set_context"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_context">[docs]</a>    <span class="k">def</span> <span class="nf">set_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.set_context(context)</span>
+<span class="sd">        Sets the context for continuation upon exiting the application.</span>
+<span class="sd">        No error appears to be produced.  Does not set exten or priority</span>
+<span class="sd">        Use at your own risk.  Ensure that you specify a valid context.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SET CONTEXT&#39;</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.set_extension"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_extension">[docs]</a>    <span class="k">def</span> <span class="nf">set_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.set_extension(extension)</span>
+<span class="sd">        Sets the extension for continuation upon exiting the application.</span>
+<span class="sd">        No error appears to be produced.  Does not set context or priority</span>
+<span class="sd">        Use at your own risk.  Ensure that you specify a valid extension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SET EXTENSION&#39;</span><span class="p">,</span> <span class="n">extension</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.set_priority"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_priority">[docs]</a>    <span class="k">def</span> <span class="nf">set_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">priority</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.set_priority(priority)</span>
+<span class="sd">        Sets the priority for continuation upon exiting the application.</span>
+<span class="sd">        No error appears to be produced.  Does not set exten or context</span>
+<span class="sd">        Use at your own risk.  Ensure that you specify a valid priority.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;set priority&#39;</span><span class="p">,</span> <span class="n">priority</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">goto_on_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">context</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;agi_context&#39;</span><span class="p">]</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="n">extension</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;agi_extension&#39;</span><span class="p">]</span>
+        <span class="n">priority</span> <span class="o">=</span> <span class="n">priority</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;agi_priority&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_extension</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_priority</span><span class="p">(</span><span class="n">priority</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AGI.record_file"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.record_file">[docs]</a>    <span class="k">def</span> <span class="nf">record_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;gsm&#39;</span><span class="p">,</span> <span class="n">escape_digits</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">DEFAULT_RECORD</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">beep</span><span class="o">=</span><span class="s1">&#39;beep&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.record_file(filename, format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep=&#39;beep&#39;) --&gt; None</span>
+<span class="sd">        Record to a file until a given dtmf digit in the sequence is received</span>
+<span class="sd">        The format will specify what kind of file will be recorded.  The timeout</span>
+<span class="sd">        is the maximum record time in milliseconds, or -1 for no timeout. Offset</span>
+<span class="sd">        samples is optional, and if provided will seek to the offset without</span>
+<span class="sd">        exceeding the end of the file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">escape_digits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_digit_list</span><span class="p">(</span><span class="n">escape_digits</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;RECORD FILE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="n">format</span><span class="p">,</span>
+                           <span class="n">escape_digits</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">beep</span><span class="p">)[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unable to convert result to digit: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.set_autohangup"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_autohangup">[docs]</a>    <span class="k">def</span> <span class="nf">set_autohangup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">secs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.set_autohangup(secs) --&gt; None</span>
+<span class="sd">        Cause the channel to automatically hangup at &lt;secs&gt; seconds in the</span>
+<span class="sd">        future.  Of course it can be hungup before then as well.   Setting to</span>
+<span class="sd">        0 will cause the autohangup feature to be disabled on this channel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SET AUTOHANGUP&#39;</span><span class="p">,</span> <span class="n">secs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.hangup"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.hangup">[docs]</a>    <span class="k">def</span> <span class="nf">hangup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.hangup(channel=&#39;&#39;)</span>
+<span class="sd">        Hangs up the specified channel.</span>
+<span class="sd">        If no channel name is given, hangs up the current channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;HANGUP&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.appexec"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.appexec">[docs]</a>    <span class="k">def</span> <span class="nf">appexec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">application</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.appexec(application, options=&#39;&#39;)</span>
+<span class="sd">        Executes &lt;application&gt; with given &lt;options&gt;.</span>
+<span class="sd">        Returns whatever the application returns, or -2 on failure to find</span>
+<span class="sd">        application</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;EXEC&#39;</span><span class="p">,</span> <span class="n">application</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">options</span><span class="p">))</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;-2&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIAppError</span><span class="p">(</span><span class="s1">&#39;Unable to find application: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">application</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="AGI.set_callerid"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_callerid">[docs]</a>    <span class="k">def</span> <span class="nf">set_callerid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.set_callerid(number) --&gt; None</span>
+<span class="sd">        Changes the callerid of the current channel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SET CALLERID&#39;</span><span class="p">,</span> <span class="n">number</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.channel_status"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.channel_status">[docs]</a>    <span class="k">def</span> <span class="nf">channel_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.channel_status(channel=&#39;&#39;) --&gt; int</span>
+<span class="sd">        Returns the status of the specified channel.  If no channel name is</span>
+<span class="sd">        given the returns the status of the current channel.</span>
+
+<span class="sd">        Return values:</span>
+<span class="sd">        0 Channel is down and available</span>
+<span class="sd">        1 Channel is down, but reserved</span>
+<span class="sd">        2 Channel is off hook</span>
+<span class="sd">        3 Digits (or equivalent) have been dialed</span>
+<span class="sd">        4 Line is ringing</span>
+<span class="sd">        5 Remote end is ringing</span>
+<span class="sd">        6 Line is up</span>
+<span class="sd">        7 Line is busy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;CHANNEL STATUS&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">AGIHangup</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="n">AGIAppError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;-1&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)}</span>
+
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="AGI.set_variable"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.set_variable">[docs]</a>    <span class="k">def</span> <span class="nf">set_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set a channel variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SET VARIABLE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">value</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AGI.get_variable"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.get_variable">[docs]</a>    <span class="k">def</span> <span class="nf">get_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a channel variable.</span>
+
+<span class="sd">        This function returns the value of the indicated channel variable.  If</span>
+<span class="sd">        the variable is not set, an empty string is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;GET VARIABLE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">AGIResultHangup</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;hangup&#39;</span><span class="p">)}</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="AGI.get_full_variable"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.get_full_variable">[docs]</a>    <span class="k">def</span> <span class="nf">get_full_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a channel variable.</span>
+
+<span class="sd">        This function returns the value of the indicated channel variable.  If</span>
+<span class="sd">        the variable is not set, an empty string is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;GET FULL VARIABLE&#39;</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">channel</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;GET FULL VARIABLE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="k">except</span> <span class="n">AGIResultHangup</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;hangup&#39;</span><span class="p">)}</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="AGI.verbose"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.verbose">[docs]</a>    <span class="k">def</span> <span class="nf">verbose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.verbose(message=&#39;&#39;, level=1) --&gt; None</span>
+<span class="sd">        Sends &lt;message&gt; to the console via verbose message system.</span>
+<span class="sd">        &lt;level&gt; is the the verbose level (1-4)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">message</span><span class="p">),</span> <span class="n">level</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AGI.database_get"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.database_get">[docs]</a>    <span class="k">def</span> <span class="nf">database_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.database_get(family, key) --&gt; str</span>
+<span class="sd">        Retrieves an entry in the Asterisk database for a given family and key.</span>
+<span class="sd">        Returns 0 if &lt;key&gt; is not set.  Returns 1 if &lt;key&gt;</span>
+<span class="sd">        is set and returns the variable in parenthesis</span>
+<span class="sd">        example return code: 200 result=1 (testvariable)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">family</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">key</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;DATABASE GET&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">family</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIDBError</span><span class="p">(</span><span class="s1">&#39;Key not found in database: family=</span><span class="si">%s</span><span class="s1">, key=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIError</span><span class="p">(</span><span class="s1">&#39;Unknown exception for : family=</span><span class="si">%s</span><span class="s1">, key=</span><span class="si">%s</span><span class="s1">, result=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">result</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="AGI.database_put"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.database_put">[docs]</a>    <span class="k">def</span> <span class="nf">database_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.database_put(family, key, value) --&gt; None</span>
+<span class="sd">        Adds or updates an entry in the Asterisk database for a</span>
+<span class="sd">        given family, key, and value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;DATABASE PUT&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span>
+            <span class="n">family</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIDBError</span><span class="p">(</span><span class="s1">&#39;Unable to put vaule in databale: family=</span><span class="si">%s</span><span class="s1">, key=</span><span class="si">%s</span><span class="s1">, value=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AGI.database_del"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.database_del">[docs]</a>    <span class="k">def</span> <span class="nf">database_del</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.database_del(family, key) --&gt; None</span>
+<span class="sd">        Deletes an entry in the Asterisk database for a</span>
+<span class="sd">        given family and key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;DATABASE DEL&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">family</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIDBError</span><span class="p">(</span><span class="s1">&#39;Unable to delete from database: family=</span><span class="si">%s</span><span class="s1">, key=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AGI.database_deltree"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.database_deltree">[docs]</a>    <span class="k">def</span> <span class="nf">database_deltree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.database_deltree(family, key=&#39;&#39;) --&gt; None</span>
+<span class="sd">        Deletes a family or specific keytree with in a family</span>
+<span class="sd">        in the Asterisk database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s1">&#39;DATABASE DELTREE&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">family</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AGIDBError</span><span class="p">(</span><span class="s1">&#39;Unable to delete tree from database: family=</span><span class="si">%s</span><span class="s1">, key=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AGI.noop"><a class="viewcode-back" href="../../agi.html#asterisk.agi.AGI.noop">[docs]</a>    <span class="k">def</span> <span class="nf">noop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;agi.noop() --&gt; None</span>
+<span class="sd">        Does nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;NOOP&#39;</span><span class="p">)</span></div></div>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">agi</span> <span class="o">=</span> <span class="n">AGI</span><span class="p">()</span>
+    <span class="c1">#agi.appexec(&#39;festival&#39;,&#39;Welcome to Klass Technologies.  Thank you for calling.&#39;)</span>
+    <span class="c1">#agi.appexec(&#39;festival&#39;,&#39;This is a test of the text to speech engine.&#39;)</span>
+    <span class="c1">#agi.appexec(&#39;festival&#39;,&#39;Press 1 for sales &#39;)</span>
+    <span class="c1">#agi.appexec(&#39;festival&#39;,&#39;Press 2 for customer support &#39;)</span>
+    <span class="c1">#agi.hangup()</span>
+    <span class="c1">#agi.goto_on_exit(extension=&#39;1234&#39;, priority=&#39;1&#39;)</span>
+    <span class="c1">#sys.exit(0)</span>
+    <span class="c1">#agi.say_digits(&#39;123&#39;, [4,&#39;5&#39;,6])</span>
+    <span class="c1">#agi.say_digits([4,5,6])</span>
+    <span class="c1">#agi.say_number(&#39;1234&#39;)</span>
+    <span class="c1">#agi.say_number(&#39;01234&#39;)  # 668</span>
+    <span class="c1">#agi.say_number(&#39;0xf5&#39;)   # 245</span>
+    <span class="n">agi</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s1">&#39;demo-congrats&#39;</span><span class="p">)</span>
+    <span class="n">agi</span><span class="o">.</span><span class="n">hangup</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1">#agi.record_file(&#39;pyst-test&#39;) #FAILS</span>
+    <span class="c1">#agi.stream_file(&#39;demo-congrats&#39;, [1,2,3,4,5,6,7,8,9,0,&#39;#&#39;,&#39;*&#39;])</span>
+    <span class="c1">#agi.appexec(&#39;background&#39;,&#39;demo-congrats&#39;)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">appexec</span><span class="p">(</span><span class="s1">&#39;backgrounder&#39;</span><span class="p">,</span> <span class="s1">&#39;demo-congrats&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">AGIAppError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="s2">&quot;Handled exception for missing application backgrounder</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">agi</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">)</span>
+    <span class="n">agi</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;foobar&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">AGIAppError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Handled exception for missing variable foobar</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">database_put</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;foobar&#39;</span><span class="p">)</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">database_put</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;baz&#39;</span><span class="p">,</span> <span class="s1">&#39;foobaz&#39;</span><span class="p">)</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">database_put</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bat&#39;</span><span class="p">,</span> <span class="s1">&#39;foobat&#39;</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">agi</span><span class="o">.</span><span class="n">database_get</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;DBVALUE foo:bar = </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">agi</span><span class="o">.</span><span class="n">database_get</span><span class="p">(</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;DBVALUE foo:bar = </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">database_del</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">)</span>
+        <span class="n">agi</span><span class="o">.</span><span class="n">database_deltree</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">AGIDBError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="s2">&quot;Handled exception for missing database entry bar:foo</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">agi</span><span class="o">.</span><span class="n">hangup</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

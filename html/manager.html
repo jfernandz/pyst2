@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Manager &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="index.html" />
+    <link rel="next" title="Changes" href="changes.html" />
+    <link rel="prev" title="fastAGI" href="fastagi.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-asterisk.manager">
+<span id="manager"></span><h1>Manager<a class="headerlink" href="#module-asterisk.manager" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-manager"></span><p>This module provides a Python API for interfacing with the asterisk manager.</p>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asterisk.manager</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">def</span> <span class="nf">handle_shutdown</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+   <span class="k">print</span> <span class="s2">&quot;Recieved shutdown event&quot;</span>
+   <span class="n">manager</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+   <span class="c1"># we could analize the event and reconnect here</span>
+
+<span class="k">def</span> <span class="nf">handle_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+   <span class="k">print</span> <span class="s2">&quot;Recieved event: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">event</span><span class="o">.</span><span class="n">name</span>
+
+<span class="n">manager</span> <span class="o">=</span> <span class="n">asterisk</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># connect to the manager</span>
+    <span class="k">try</span><span class="p">:</span>
+       <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">)</span>
+       <span class="n">manager</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;secret&#39;</span><span class="p">)</span>
+
+        <span class="c1"># register some callbacks</span>
+        <span class="n">manager</span><span class="o">.</span><span class="n">register_event</span><span class="p">(</span><span class="s1">&#39;Shutdown&#39;</span><span class="p">,</span> <span class="n">handle_shutdown</span><span class="p">)</span> <span class="c1"># shutdown</span>
+        <span class="n">manager</span><span class="o">.</span><span class="n">register_event</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">handle_event</span><span class="p">)</span>           <span class="c1"># catch all</span>
+
+        <span class="c1"># get a status report</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+
+        <span class="n">manager</span><span class="o">.</span><span class="n">logoff</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">asterisk</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">ManagerSocketException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+       <span class="k">print</span> <span class="s2">&quot;Error connecting to the manager: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span>
+       <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">asterisk</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">ManagerAuthException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+       <span class="k">print</span> <span class="s2">&quot;Error logging in to the manager: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span>
+       <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">asterisk</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">ManagerException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+       <span class="k">print</span> <span class="s2">&quot;Error: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span>
+       <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">finally</span><span class="p">:</span>
+   <span class="c1"># remember to clean up</span>
+   <span class="n">manager</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Remember all header, response, and event names are case sensitive.</p>
+<p>Not all manager actions are implmented as of yet, feel free to add them
+and submit patches.</p>
+</div>
+<div class="section" id="specification">
+<h2>Specification<a class="headerlink" href="#specification" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="asterisk.manager.Event">
+<em class="property">class </em><code class="descclassname">asterisk.manager.</code><code class="descname">Event</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manager interface Events, __init__ expects and &#8216;Event&#8217; message</p>
+<dl class="method">
+<dt id="asterisk.manager.Event.get_header">
+<code class="descname">get_header</code><span class="sig-paren">(</span><em>hname</em>, <em>defval=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#Event.get_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.Event.get_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the specfied header</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.manager.Event.has_header">
+<code class="descname">has_header</code><span class="sig-paren">(</span><em>hname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#Event.has_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.Event.has_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for a header</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asterisk.manager.ManagerMsg">
+<em class="property">class </em><code class="descclassname">asterisk.manager.</code><code class="descname">ManagerMsg</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#ManagerMsg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.ManagerMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>A manager interface message</p>
+<dl class="method">
+<dt id="asterisk.manager.ManagerMsg.get_header">
+<code class="descname">get_header</code><span class="sig-paren">(</span><em>hname</em>, <em>defval=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#ManagerMsg.get_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.ManagerMsg.get_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the specfied header</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.manager.ManagerMsg.has_header">
+<code class="descname">has_header</code><span class="sig-paren">(</span><em>hname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#ManagerMsg.has_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.ManagerMsg.has_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for a header</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asterisk.manager.ManagerMsg.parse">
+<code class="descname">parse</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asterisk/manager.html#ManagerMsg.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#asterisk.manager.ManagerMsg.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a manager message</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Manager</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#specification">Specification</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="fastagi.html" title="previous chapter">fastAGI</a></li>
+      <li>Next: <a href="changes.html" title="next chapter">Changes</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/manager.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/manager.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

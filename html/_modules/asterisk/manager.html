@@ -1,0 +1,767 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asterisk.manager &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for asterisk.manager</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># vim: set expandtab shiftwidth=4:</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: manager</span>
+<span class="sd">   :synopsis: Python Interface for Asterisk Manager</span>
+
+<span class="sd">This module provides a Python API for interfacing with the asterisk manager.</span>
+
+<span class="sd">Example</span>
+<span class="sd">-------</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">   import asterisk.manager</span>
+<span class="sd">   import sys</span>
+
+<span class="sd">   def handle_shutdown(event, manager):</span>
+<span class="sd">      print &quot;Recieved shutdown event&quot;</span>
+<span class="sd">      manager.close()</span>
+<span class="sd">      # we could analize the event and reconnect here</span>
+
+<span class="sd">   def handle_event(event, manager):</span>
+<span class="sd">      print &quot;Recieved event: %s&quot; % event.name</span>
+
+<span class="sd">   manager = asterisk.manager.Manager()</span>
+<span class="sd">   try:</span>
+<span class="sd">       # connect to the manager</span>
+<span class="sd">       try:</span>
+<span class="sd">          manager.connect(&#39;host&#39;)</span>
+<span class="sd">          manager.login(&#39;user&#39;, &#39;secret&#39;)</span>
+
+<span class="sd">           # register some callbacks</span>
+<span class="sd">           manager.register_event(&#39;Shutdown&#39;, handle_shutdown) # shutdown</span>
+<span class="sd">           manager.register_event(&#39;*&#39;, handle_event)           # catch all</span>
+
+<span class="sd">           # get a status report</span>
+<span class="sd">           response = manager.status()</span>
+
+<span class="sd">           manager.logoff()</span>
+<span class="sd">       except asterisk.manager.ManagerSocketException as e:</span>
+<span class="sd">          print &quot;Error connecting to the manager: %s&quot; % e.strerror</span>
+<span class="sd">          sys.exit(1)</span>
+<span class="sd">       except asterisk.manager.ManagerAuthException as e:</span>
+<span class="sd">          print &quot;Error logging in to the manager: %s&quot; % e.strerror</span>
+<span class="sd">          sys.exit(1)</span>
+<span class="sd">       except asterisk.manager.ManagerException as e:</span>
+<span class="sd">          print &quot;Error: %s&quot; % e.strerror</span>
+<span class="sd">          sys.exit(1)</span>
+
+<span class="sd">   finally:</span>
+<span class="sd">      # remember to clean up</span>
+<span class="sd">      manager.close()</span>
+
+<span class="sd">Remember all header, response, and event names are case sensitive.</span>
+
+<span class="sd">Not all manager actions are implmented as of yet, feel free to add them</span>
+<span class="sd">and submit patches.</span>
+
+<span class="sd">Specification</span>
+<span class="sd">-------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">PY3</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">queue</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+
+<span class="n">EOL</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span>
+
+
+<div class="viewcode-block" id="ManagerMsg"><a class="viewcode-back" href="../../manager.html#asterisk.manager.ManagerMsg">[docs]</a><span class="k">class</span> <span class="nc">ManagerMsg</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A manager interface message&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="c1"># the raw response, straight from the horse&#39;s mouth:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># parse the response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="c1"># This is an unknown message, may happen if a command (notably</span>
+        <span class="c1"># &#39;dialplan show something&#39;) contains a \n\r\n sequence in the</span>
+        <span class="c1"># middle of output. We hope this happens only *once* during a</span>
+        <span class="c1"># misbehaved command *and* the command ends with --END COMMAND--</span>
+        <span class="c1"># in that case we return an Event.  Otherwise we asume it is</span>
+        <span class="c1"># from a misbehaving command not returning a proper header (e.g.</span>
+        <span class="c1"># IAXnetstats in Asterisk 1.4.X)</span>
+        <span class="c1"># A better solution is probably to retain some knowledge of</span>
+        <span class="c1"># commands sent and their expected return syntax. In that case</span>
+        <span class="c1"># we could wait for --END COMMAND-- for &#39;command&#39;.</span>
+        <span class="c1"># B0rken in asterisk. This should be parseable without context.</span>
+        <span class="k">if</span> <span class="s1">&#39;Event&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="ow">and</span> <span class="s1">&#39;Response&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+            <span class="c1"># there are commands that return the ActionID but not</span>
+            <span class="c1"># &#39;Response&#39;, e.g., IAXpeers in Asterisk 1.4.X</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="s1">&#39;ActionID&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Response&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Generated Header&#39;</span>
+            <span class="k">elif</span> <span class="s1">&#39;--END COMMAND--&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Event&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;NoClue&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Response&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Generated Header&#39;</span>
+
+<div class="viewcode-block" id="ManagerMsg.parse"><a class="viewcode-back" href="../../manager.html#asterisk.manager.ManagerMsg.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse a manager message&quot;&quot;&quot;</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+            <span class="c1"># all valid header lines end in \r\n</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="n">n</span><span class="p">:])</span>
+                <span class="k">break</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c1"># invalid header, start of multi-line data response</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="n">n</span><span class="p">:])</span>
+                <span class="k">break</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ManagerMsg.has_header"><a class="viewcode-back" href="../../manager.html#asterisk.manager.ManagerMsg.has_header">[docs]</a>    <span class="k">def</span> <span class="nf">has_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for a header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span></div>
+
+<div class="viewcode-block" id="ManagerMsg.get_header"><a class="viewcode-back" href="../../manager.html#asterisk.manager.ManagerMsg.get_header">[docs]</a>    <span class="k">def</span> <span class="nf">get_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">,</span> <span class="n">defval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the specfied header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">hname</span><span class="p">,</span> <span class="n">defval</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the specfied header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">hname</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;Response&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Response&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Event&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Event"><a class="viewcode-back" href="../../manager.html#asterisk.manager.Event">[docs]</a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manager interface Events, __init__ expects and &#39;Event&#39; message&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+
+        <span class="c1"># store all of the event data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">headers</span>
+
+        <span class="c1"># if this is not an event message we have a problem</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="s1">&#39;Event&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ManagerException</span><span class="p">(</span>
+                <span class="s1">&#39;Trying to create event from non event message&#39;</span><span class="p">)</span>
+
+        <span class="c1"># get the event name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s1">&#39;Event&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Event.has_header"><a class="viewcode-back" href="../../manager.html#asterisk.manager.Event.has_header">[docs]</a>    <span class="k">def</span> <span class="nf">has_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for a header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span></div>
+
+<div class="viewcode-block" id="Event.get_header"><a class="viewcode-back" href="../../manager.html#asterisk.manager.Event.get_header">[docs]</a>    <span class="k">def</span> <span class="nf">get_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">,</span> <span class="n">defval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the specfied header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">hname</span><span class="p">,</span> <span class="n">defval</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the specfied header&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="n">hname</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Event&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_action_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ActionID&#39;</span><span class="p">,</span> <span class="mo">0000</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">Manager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c1"># our socket</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c1"># set by received greeting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+
+        <span class="c1"># our hostname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+
+        <span class="c1"># our queues</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_response_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+
+        <span class="c1"># callbacks for events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reswaiting</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># who is waiting for a response</span>
+
+        <span class="c1"># sequence stuff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seqlock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># some threads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">message_loop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_thread</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch_thread</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">connected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if we are connected or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">next_seq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the next number in the sequence, this is used for ActionID&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seqlock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_seqlock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">send_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cdict</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a command to the manager</span>
+
+<span class="sd">        If a list is passed to the cdict argument, each item in the list will</span>
+<span class="sd">        be sent to asterisk under the same header in the following manner:</span>
+
+<span class="sd">        cdict = {&quot;Action&quot;: &quot;Originate&quot;,</span>
+<span class="sd">                 &quot;Variable&quot;: [&quot;var1=value&quot;, &quot;var2=value&quot;]}</span>
+<span class="sd">        send_action(cdict)</span>
+
+<span class="sd">        ...</span>
+
+<span class="sd">        Action: Originate</span>
+<span class="sd">        Variable: var1=value</span>
+<span class="sd">        Variable: var2=value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ManagerException</span><span class="p">(</span><span class="s2">&quot;Not connected&quot;</span><span class="p">)</span>
+
+        <span class="c1"># fill in our args</span>
+        <span class="n">cdict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># set the action id</span>
+        <span class="k">if</span> <span class="s1">&#39;ActionID&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cdict</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;ActionID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%08x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_seq</span><span class="p">())</span>
+        <span class="n">clist</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># generate the command</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">cdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">item</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">])</span>
+                    <span class="n">clist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
+                <span class="n">clist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">item</span><span class="p">)</span>
+        <span class="n">clist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EOL</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">EOL</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clist</span><span class="p">)</span>
+
+        <span class="c1"># lock the socket and send our command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">command</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ManagerSocketException</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">errno</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reswaiting</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reswaiting</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ManagerSocketException</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Connection Terminated&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">_receive_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the response from a command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">multiline</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">wait_for_marker</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">eolcount</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># loop while we are sill running and connected</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">isSet</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="p">:</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+                    <span class="c1"># check to see if this is the greeting line</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">and</span> <span class="s1">&#39;/&#39;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="c1"># store the title of the manager we are connecting to:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="c1"># store the version of the manager we are connecting to:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="c1"># fake message header</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Response: Generated Header</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                        <span class="k">break</span>
+                    <span class="c1"># If the line is EOL marker we have a complete message.</span>
+                    <span class="c1"># Some commands are broken and contain a \n\r\n</span>
+                    <span class="c1"># sequence, in the case wait_for_marker is set, we</span>
+                    <span class="c1"># have such a command where the data ends with the</span>
+                    <span class="c1"># marker --END COMMAND--, so we ignore embedded</span>
+                    <span class="c1"># newlines until we see that marker</span>
+                    <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="n">EOL</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">wait_for_marker</span><span class="p">:</span>
+                        <span class="n">multiline</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="k">if</span> <span class="n">lines</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+                            <span class="k">break</span>
+                        <span class="c1"># ignore empty lines at start</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If the user executed the status command, it&#39;s a special</span>
+                    <span class="c1"># case, so we need to look for a marker.</span>
+                    <span class="k">if</span> <span class="s1">&#39;status will follow&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">status</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">wait_for_marker</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+                    <span class="c1"># line not ending in \r\n or without &#39;:&#39; isn&#39;t a</span>
+                    <span class="c1"># valid header and starts multiline response</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;:&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">multiline</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="c1"># Response: Follows indicates we should wait for end</span>
+                    <span class="c1"># marker --END COMMAND--</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">multiline</span> <span class="ow">or</span> <span class="n">status</span><span class="p">)</span> <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;Response&#39;</span><span class="p">)</span> <span class="ow">and</span> \
+                            <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Follows&#39;</span><span class="p">:</span>
+                        <span class="n">wait_for_marker</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="c1"># same when seeing end of multiline response</span>
+                    <span class="k">if</span> <span class="n">multiline</span> <span class="ow">and</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;--END COMMAND--&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;--END COMMAND--&#39;</span><span class="p">)):</span>
+                        <span class="n">wait_for_marker</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="n">multiline</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="c1"># same when seeing end of status response</span>
+                    <span class="k">if</span> <span class="n">status</span> <span class="ow">and</span> <span class="s1">&#39;StatusComplete&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">wait_for_marker</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="n">status</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># EOF during reading</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="c1"># if we have a message append it to our queue</span>
+                <span class="k">if</span> <span class="n">lines</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">register_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">function</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register a callback for the specfied event.</span>
+<span class="sd">        If a callback function returns True, no more callbacks for that</span>
+<span class="sd">        event will be executed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get the current value, or an empty list</span>
+        <span class="c1"># then add our new callback</span>
+        <span class="n">current_callbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">current_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="p">[</span><span class="n">event</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_callbacks</span>
+
+    <span class="k">def</span> <span class="nf">unregister_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">function</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unregister a callback for the specified event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current_callbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">current_callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="p">[</span><span class="n">event</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_callbacks</span>
+
+    <span class="k">def</span> <span class="nf">message_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The method for the event thread.</span>
+<span class="sd">        This actually recieves all types of messages and places them</span>
+<span class="sd">        in the proper queues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># start a thread to recieve data</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_receive_data</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># loop getting messages from the queue</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+                <span class="c1"># get/wait for messages</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+                <span class="c1"># if we got None as our message we are done</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="c1"># notify the other queues</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_event_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">waiter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reswaiting</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_response_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+                <span class="c1"># parse the data</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="n">ManagerMsg</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+                <span class="c1"># check if this is an event message</span>
+                <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="s1">&#39;Event&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_event_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+                <span class="c1"># check if this is a response</span>
+                <span class="k">elif</span> <span class="n">message</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="s1">&#39;Response&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_response_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;No clue what we got</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">message</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># wait for our data receiving thread to exit</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">event_dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This thread is responsible for dispatching events&quot;&quot;&quot;</span>
+
+        <span class="c1"># loop dispatching events</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="c1"># get/wait for an event</span>
+            <span class="n">ev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+            <span class="c1"># if we got None as an event, we are finished</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ev</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="c1"># dispatch our events</span>
+
+            <span class="c1"># first build a list of the functions to execute</span>
+            <span class="n">callbacks</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[])</span>
+                         <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_callbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="p">[]))</span>
+
+            <span class="c1"># now execute the functions</span>
+            <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">callback</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+                    <span class="k">break</span>
+
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5038</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Connect to the manager interface&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">ManagerException</span><span class="p">(</span><span class="s1">&#39;Already connected to manager&#39;</span><span class="p">)</span>
+
+        <span class="c1"># make sure host is a string</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">host</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span>
+
+        <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>  <span class="c1"># make sure port is an int</span>
+
+        <span class="c1"># create our socket and connect</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+            <span class="n">_sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">_sock</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;rwb&#39;</span><span class="p">,</span> <span class="n">buffering</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">_sock</span><span class="o">.</span><span class="n">makefile</span><span class="p">()</span>
+            <span class="n">_sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ManagerSocketException</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">errno</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="p">)</span>
+
+        <span class="c1"># we are connected and running</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+        <span class="c1"># start the event thread</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># start the event dispatching thread</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># get our initial connection response</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Shutdown the connection to the manager&quot;&quot;&quot;</span>
+
+        <span class="c1"># if we are still running, logout</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">isSet</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logoff</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="c1"># put None in the message_queue to kill our threads</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_message_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+            <span class="c1"># wait for the event thread to exit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+            <span class="c1"># make sure we do not join our self (when close is called from event handlers)</span>
+            <span class="k">if</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch_thread</span><span class="p">:</span>
+                <span class="c1"># wait for the dispatch thread to exit</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_dispatch_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+<span class="c1"># Manager actions</span>
+
+    <span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">secret</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Login to the manager, throws ManagerAuthException when login falis&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Login&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Username&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Secret&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">secret</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s1">&#39;Response&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;Error&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ManagerAuthException</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s1">&#39;Message&#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send a ping action to the manager&quot;&quot;&quot;</span>
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Ping&#39;</span><span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">logoff</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logoff from the manager&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Logoff&#39;</span><span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">hangup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hangup the specified channel&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Hangup&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a status message from asterisk&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Status&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">redirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">exten</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="n">extra_channel</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Redirect a channel&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Redirect&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Exten&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exten</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">priority</span>
+        <span class="k">if</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Context&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="k">if</span> <span class="n">extra_channel</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;ExtraChannel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">extra_channel</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">originate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">exten</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">caller_id</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">account</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Originate a call&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Originate&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Exten&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exten</span>
+        <span class="k">if</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Context&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="k">if</span> <span class="n">priority</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">priority</span>
+        <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Timeout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="k">if</span> <span class="n">caller_id</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;CallerID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">caller_id</span>
+        <span class="k">if</span> <span class="n">async</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Async&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;yes&#39;</span>
+        <span class="k">if</span> <span class="n">account</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Account&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">account</span>
+        <span class="c1"># join dict of vairables together in a string in the form of &#39;key=val|key=val&#39;</span>
+        <span class="c1"># with the latest CVS HEAD this is no longer necessary</span>
+        <span class="c1"># if variables: cdict[&#39;Variable&#39;] = &#39;|&#39;.join([&#39;=&#39;.join((str(key), str(value))) for key, value in variables.items()])</span>
+        <span class="k">if</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Variable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">mailbox_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mailbox</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the status of the specfied mailbox&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;MailboxStatus&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Mailbox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mailbox</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute a command&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Command&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Command&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">command</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">extension_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exten</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the state of an extension&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;ExtensionState&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Exten&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exten</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Context&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">playdtmf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">digit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plays a dtmf digit on the specified channel&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;PlayDTMF&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Digit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digit</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">absolute_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set an absolute timeout on a channel&quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;AbsoluteTimeout&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Timeout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">mailbox_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mailbox</span><span class="p">):</span>
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;MailboxCount&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Mailbox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mailbox</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">sippeers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Sippeers&#39;</span><span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">sipshowpeer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peer</span><span class="p">):</span>
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;SIPshowpeer&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Peer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">peer</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">reload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reloads config for a given module &quot;&quot;&quot;</span>
+
+        <span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Action&#39;</span><span class="p">:</span> <span class="s1">&#39;Reload&#39;</span><span class="p">}</span>
+        <span class="n">cdict</span><span class="p">[</span><span class="s1">&#39;Module&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+
+<span class="k">class</span> <span class="nc">ManagerException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">ManagerSocketException</span><span class="p">(</span><span class="n">ManagerException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">ManagerAuthException</span><span class="p">(</span><span class="n">ManagerException</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

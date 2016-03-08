@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyst2: A Python Interface to Asterisk &mdash; pyst2 0.4.9 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyst2 0.4.9 documentation" href="index.html" />
+    <link rel="next" title="AGI" href="agi.html" />
+    <link rel="prev" title="Welcome to pyst2’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyst2-a-python-interface-to-asterisk">
+<h1>pyst2: A Python Interface to Asterisk<a class="headerlink" href="#pyst2-a-python-interface-to-asterisk" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/pyst2"><img alt="pyst2 Release" src="https://img.shields.io/pypi/v/pyst2.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/pyst2"><img alt="pyst2 Downloads" src="https://img.shields.io/pypi/dm/pyst2.svg" /></a>
+<a class="reference external image-reference" href="https://travis-ci.org/rdegges/pyst2"><img alt="pyst2 Build" src="https://img.shields.io/travis/rdegges/pyst2.svg" /></a>
+<img alt="Snake Sketch" src="https://github.com/rdegges/pyst2/raw/master/assets/snake-sketch.jpg" />
+<div class="section" id="meta">
+<h2>Meta<a class="headerlink" href="#meta" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Author: Randall Degges</li>
+<li>Email: <a class="reference external" href="mailto:r&#37;&#52;&#48;rdegges&#46;com">r<span>&#64;</span>rdegges<span>&#46;</span>com</a></li>
+<li>Site: <a class="reference external" href="http://www.rdegges.com">http://www.rdegges.com</a></li>
+<li>Status: <em>looking for maintainer</em>, active</li>
+</ul>
+<p><strong>NOTE</strong>: This project is in need of an active maintainer.  I&#8217;m quite busy with
+other non-asterisk related projects in my personal time, so if you&#8217;re a good
+Python programmer, and working with this library and Asterisk on a daily basis
+&#8211; please consider maintaining the project!  Contact me for more information:
+<a class="reference external" href="mailto:r&#37;&#52;&#48;rdegges&#46;com">r<span>&#64;</span>rdegges<span>&#46;</span>com</a></p>
+<p>In the meantime, I&#8217;m happy to accept pull requests and cut releases as needed.
+If you want to contribute to the project, please do!</p>
+</div>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>pyst2 consists of a set of interfaces and libraries to allow programming of
+Asterisk from python. The library currently supports AGI, AMI, and the parsing
+of Asterisk configuration files. The library also includes debugging facilities
+for AGI.</p>
+<p>This project has been forked from pyst (<a class="reference external" href="http://sf.net/projects/pyst/">http://sf.net/projects/pyst/</a>) because
+it was impossible for me to contact the project maintainer (after several
+attempts), and I&#8217;d like to bring the project up-to-date, fix bugs, and make
+it more usable overall.</p>
+<p>My immediate plans include adding full documentation, re-writing some
+of the core routines, adding a test suite, and accepting pull requests.</p>
+<p>If you are one of the current maintainers, and would like to take over the
+fork, please contact me: <a class="reference external" href="mailto:r&#37;&#52;&#48;rdegges&#46;com">r<span>&#64;</span>rdegges<span>&#46;</span>com</a>, so we can get that setup!</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>To install <code class="docutils literal"><span class="pre">pyst2</span></code>, simply run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> pip install pyst2
+</pre></div>
+</div>
+<p>This will install the latest version of the library automatically.</p>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>Documentation is currently only in python docstrings, you can use
+pythons built-in help facility:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asterisk</span>
+<span class="n">help</span> <span class="p">(</span><span class="n">asterisk</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">asterisk.agi</span>
+<span class="n">help</span> <span class="p">(</span><span class="n">asterisk</span><span class="o">.</span><span class="n">agi</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">asterisk.manager</span>
+<span class="n">help</span> <span class="p">(</span><span class="n">asterisk</span><span class="o">.</span><span class="n">manager</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">asterisk.config</span>
+<span class="n">help</span> <span class="p">(</span><span class="n">asterisk</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Some notes on platforms: We now specify &#8220;platforms = &#8216;Any&#8217;&#8221; in
+<code class="docutils literal"><span class="pre">setup.py</span></code>. This means, the manager part of the package will probably
+run on any platform. The agi scripts on the other hand are called
+directly on the host where Asterisk is running. Since Asterisk doesn&#8217;t
+run on windows platforms (and probably never will) the agi part of the
+package can only be run on Asterisk platforms.</p>
+</div>
+<div class="section" id="fastagi">
+<h2>FastAGI<a class="headerlink" href="#fastagi" title="Permalink to this headline">¶</a></h2>
+<p>FastAGI support is a python based raw SocketServer, To start the server
+python fastagi.py should start it listening on localhost and the default
+asterisk FastAGI port. This does require the newest version of pyst2.
+The FastAGI server runs in as a Forked operation for each request, in
+an attempt to prevent blocking by a single bad service. As a result the
+FastAGI server may consume more memory then a single process. If you need
+to use a single process simply uncomment the appropriate line. Future versions
+of this will use a config file to set options.</p>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>Thanks to Karl Putland for writing the original package.</p>
+<p>Thanks to Matthew Nicholson for maintaining the package for some years
+and for handing over maintenance when he was no longer interested.</p>
+<p>Thanks to Randall Degges for maintaining this for and accepting
+pull requests.</p>
+</div>
+<div class="section" id="things-to-do-for-pyst">
+<h2>Things to do for pyst<a class="headerlink" href="#things-to-do-for-pyst" title="Permalink to this headline">¶</a></h2>
+<p>This is the original changelog merged into the readme file. I&#8217;m not so
+sure I really want to change all these things (in particular the
+threaded implementation looks good to me). I will maintain a section
+summarizing the changes in this README. Detailed changes will be
+available in the version control tool (currently git).</p>
+<ul>
+<li><p class="first">ChangeLog:
+The ChangeLog needs to be updated from the monotone logs.</p>
+</li>
+<li><p class="first">Documentation:
+All of pyst&#8217;s inline documentation needs to be updated.</p>
+</li>
+<li><p class="first">manager.py:
+This should be converted to be single threaded.  Also there is a race
+condition when a user calls manager.logoff() followed by
+manager.close().  The close() function may still call logoff again if
+the socket thread has not yet cleared the _connected flag.</p>
+<p>A class should be made for each manager action rather than having a
+function in a manager class.  The manager class should be adapted to
+have a send method that know the general format of the classes.</p>
+</li>
+</ul>
+<p>Matthew Nicholson writes on the mailinglist (note that I&#8217;m not sure I&#8217;ll do
+this, I&#8217;m currently satisfied with the threaded implementation):</p>
+<blockquote>
+<div><p>For pyst 0.3 I am planning to clean up the manager.py.  There are
+several know issues with the code.  No one has actually reported these
+as problems, but I have personally had trouble with these.  Currently
+manager.py runs in several threads, the main program thread, a thread to
+read from the network, and an event distribution thread.  This causes
+problems with non thread safe code such as the MySQLdb libraries.  This
+design also causes problems when an event handler throws an exception
+that causes the event processing thread to terminate.</p>
+<p>The second problem is with the way actions are sent.  Each action has a
+specific function associated with it in the manager object that takes
+all possible arguments that may ever be passed to that action.  This
+makes the api somewhat rigid and the Manager object cluttered.</p>
+<p>To solve these problems I am basically going to copy the design of my
+Astxx manager library (written in c++) and make it more python like.
+Each action will be a different object with certain methods to handle
+various tasks, with one function in the actual Manager class to send the
+action.  This will make the Manager class much smaller and much more
+flexible.  The current code will be consolidated into a single threaded
+design with hooks to have the library process events and such.  These
+hooks will be called from the host application&#8217;s main loop.</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyst2: A Python Interface to Asterisk</a><ul>
+<li><a class="reference internal" href="#meta">Meta</a></li>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#fastagi">FastAGI</a></li>
+<li><a class="reference internal" href="#credits">Credits</a></li>
+<li><a class="reference internal" href="#things-to-do-for-pyst">Things to do for pyst</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to pyst2&#8217;s documentation!</a></li>
+      <li>Next: <a href="agi.html" title="next chapter">AGI</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Randall Degges.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/readme.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
