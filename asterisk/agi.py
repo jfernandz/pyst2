@@ -667,6 +667,13 @@ class AGI:
         """
         self.execute('NOOP')
 
+    def exec_command(self, command, *args):
+        """Send an arbitrary asterisk command with args (even not AGI commands)"""
+        # The arguments of the command should be prepared as comma delimited, that's the way the EXEC works
+        args = ','.join(map(str, args))
+        return self.execute('EXEC', command, args)
+
+
 if __name__ == '__main__':
     agi = AGI()
     #agi.appexec('festival','Welcome to Klass Technologies.  Thank you for calling.')
