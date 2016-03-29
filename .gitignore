@@ -5,6 +5,7 @@
 .coverage
 
 # Build remnants.
+html
 dist
 build
 _build
