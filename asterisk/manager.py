@@ -2,9 +2,15 @@
 # vim: set expandtab shiftwidth=4:
 
 """
-Python Interface for Asterisk Manager
+.. module:: manager
+   :synopsis: Python Interface for Asterisk Manager
 
 This module provides a Python API for interfacing with the asterisk manager.
+
+Example
+-------
+
+.. code-block:: python
 
    import asterisk.manager
    import sys
@@ -50,6 +56,9 @@ Remember all header, response, and event names are case sensitive.
 
 Not all manager actions are implmented as of yet, feel free to add them
 and submit patches.
+
+Specification
+-------------
 """
 
 import sys
