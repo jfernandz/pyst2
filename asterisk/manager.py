@@ -108,7 +108,15 @@ class ManagerMsg(object):
                 break
             try:
                 k, v = (x.strip() for x in line.split(':', 1))
-                self.headers[k] = v
+                # if header is ChanVariable it can have more that one value
+                # we store the variable in a dictionary parsed
+                if 'ChanVariable' in k:
+                    if not self.headers.has_key('ChanVariable'):
+                        self.headers['ChanVariable']={}
+                    name, value = (x.strip() for x in v.split('=',1))
+                    self.headers['ChanVariable'][name]=value
+                else:
+                    self.headers[k] = v
             except ValueError:
                 # invalid header, start of multi-line data response
                 data.extend(response[n:])
