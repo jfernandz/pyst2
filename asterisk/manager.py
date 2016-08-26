@@ -263,7 +263,7 @@ class Manager(object):
 
         # lock the socket and send our command
         try:
-            self._sock.write(command.encode('utf8'))
+            self._sock.write(command.encode('utf8','ignore'))
             self._sock.flush()
         except socket.error as e:
             raise ManagerSocketException(e.errno, e.strerror)
