@@ -617,7 +617,7 @@ class AGI:
         Sends <message> to the console via verbose message system.
         <level> is the the verbose level (1-4)
         """
-        self.execute('VERBOSE', type(self._quote(message)), level)
+        self.execute('VERBOSE', self._quote(message), level)
 
     def database_get(self, family, key):
         """agi.database_get(family, key) --> str
