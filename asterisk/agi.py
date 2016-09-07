@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# vim: set et sw=4:
+# -*- coding: utf-8 -*-
 """
 .. module:: agi
    :synopsis: This module contains functions and classes to implment AGI scripts in python. 
