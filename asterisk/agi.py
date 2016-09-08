@@ -1,6 +1,6 @@
--#!/usr/bin/env python2
--# vim: set et sw=4:
-
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
 """
 .. module:: agi
    :synopsis: This module contains functions and classes to implment AGI scripts in python. 
@@ -27,7 +27,7 @@ import sys
 import pprint
 import re
 import signal
-#import sys
+import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
