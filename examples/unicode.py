@@ -16,6 +16,8 @@ string = 'カタカナ'
 
 agi.verbose(string)
 
+print('VERBOSE "カタカナ" 1')
+
 # Get variable environment
 extension = agi.env['agi_extension']
 
