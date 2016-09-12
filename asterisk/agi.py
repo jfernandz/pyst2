@@ -1,5 +1,6 @@
-#!/usr/bin/env python2
-# vim: set et sw=4:
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim: set et sw=4 fenc=utf-8: 
 """
 .. module:: agi
    :synopsis: This module contains functions and classes to implment AGI scripts in python. 
@@ -124,7 +125,7 @@ class AGI:
           string = str(string)
         if isinstance(string, float):
           string = str(string)
-        return ''.join(['"', string.encode('ascii', 'ignore'), '"'])
+        return ''.join(['"', string.encode('utf8', 'ignore'), '"'])
 
     def _handle_sighup(self, signum, frame):
         """Handle the SIGHUP signal"""
@@ -493,17 +494,20 @@ class AGI:
         self.set_extension(extension)
         self.set_priority(priority)
 
-    def record_file(self, filename, format='gsm', escape_digits='#', timeout=DEFAULT_RECORD, offset=0, beep='beep'):
-        """agi.record_file(filename, format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep='beep') --> None
-        Record to a file until a given dtmf digit in the sequence is received
-        The format will specify what kind of file will be recorded.  The timeout
-        is the maximum record time in milliseconds, or -1 for no timeout. Offset
-        samples is optional, and if provided will seek to the offset without
-        exceeding the end of the file
+    def record_file(self, filename, format='gsm', escape_digits='#', timeout=DEFAULT_RECORD, offset=0, beep='beep', silence=0):
+        """agi.record_file(filename, format, escape_digits, timeout=DEFAULT_TIMEOUT, offset=0, beep='beep', silence=0) --> None
+        Record to a file until a given dtmf digit in the sequence is received. Returns
+        '-1' on hangup or error.  The format will specify what kind of file will be
+        recorded. The <timeout> is the maximum record time in milliseconds, or '-1'
+        for no <timeout>. <offset samples> is optional, and, if provided, will seek
+        to the offset without exceeding the end of the file. <silence> is the number
+        of seconds of silence allowed before the function returns despite the lack
+        of dtmf digits or reaching <timeout>. <silence> value must be preceded by
+        's=' and is also optional.
         """
         escape_digits = self._process_digit_list(escape_digits)
         res = self.execute('RECORD FILE', self._quote(filename), format,
-                           escape_digits, timeout, offset, beep)['result'][0]
+                           escape_digits, timeout, offset, beep, ('s=%s' % silence))['result'][0]
         try:
             return chr(int(res))
         except:
