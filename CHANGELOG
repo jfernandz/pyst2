@@ -1,3 +1,7 @@
+2016-11-04  VoiPCS <https://github.com/VoIPCS>
+
+    * Fixing unicode bug in `send_action` for AMI.
+
 2016-02-16  Randall Degges <https://github.com/rdegges>
 
     * Fixing issue in AGI class init function. Thanks to @sancho2934489 for the
