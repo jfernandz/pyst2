@@ -575,7 +575,7 @@ class Manager(object):
 
         return response
 
-    def originate(self, channel, exten, context='', priority='', timeout='', caller_id='', async=False, account='', variables={}):
+    def originate(self, channel, exten, context='', priority='', timeout='', caller_id='', async=False, earlymedia='false', account='', variables={}):
         """Originate a call"""
 
         cdict = {'Action': 'Originate'}
@@ -591,6 +591,8 @@ class Manager(object):
             cdict['CallerID'] = caller_id
         if async:
             cdict['Async'] = 'yes'
+        if earlymedia:
+            cdict['EarlyMedia'] = earlymedia
         if account:
             cdict['Account'] = account
         # join dict of vairables together in a string in the form of 'key=val|key=val'
