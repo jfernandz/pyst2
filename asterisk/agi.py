@@ -105,7 +105,8 @@ class AGI:
     def _get_agi_env(self):
         while 1:
             if PY3:
-                line = self.stdin.readline().strip().decode('utf8')
+                line = self.stdin.readline().strip()
+                if type(line) is bytes: line = line.decode('utf8')
             else:
                 line = self.stdin.readline().strip()
             self.stderr.write('ENV LINE: ')
@@ -164,7 +165,10 @@ class AGI:
         if command[-1] != '\n':
             command += '\n'
         self.stderr.write('    COMMAND: %s' % command)
-        self.stdout.write(command)
+        if PY3:
+            self.stdout.write(command.encode('utf8'))
+        else:
+            self.stdout.write(command)
         self.stdout.flush()
 
     def get_result(self, stdin=sys.stdin):
