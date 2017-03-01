@@ -104,11 +104,9 @@ class AGI:
 
     def _get_agi_env(self):
         while 1:
+            line = self.stdin.readline().strip()
             if PY3:
-                line = self.stdin.readline().strip()
                 if type(line) is bytes: line = line.decode('utf8')
-            else:
-                line = self.stdin.readline().strip()
             self.stderr.write('ENV LINE: ')
             self.stderr.write(line)
             self.stderr.write('\n')
@@ -176,6 +174,8 @@ class AGI:
         code = 0
         result = {'result': ('', '')}
         line = self.stdin.readline().strip()
+        if PY3:
+            if type(line) is bytes: line = line.decode('utf8')
         self.stderr.write('    RESULT_LINE: %s\n' % line)
         m = re_code.search(line)
         if m:
@@ -203,6 +203,8 @@ class AGI:
             while line[:3] != '520':
                 usage.append(line)
                 line = self.stdin.readline().strip()
+                if PY3:
+                    if type(line) is bytes: line = line.decode('utf8')
             usage.append(line)
             usage = '%s\n' % '\n'.join(usage)
             raise AGIUsageError(usage)
