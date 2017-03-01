@@ -27,6 +27,7 @@ import sys
 import pprint
 import re
 import signal
+from six import PY3
 
 DEFAULT_TIMEOUT = 2000  # 2sec timeout used as default for functions that take timeouts
 DEFAULT_RECORD = 20000  # 20sec record time
@@ -103,7 +104,10 @@ class AGI:
 
     def _get_agi_env(self):
         while 1:
-            line = self.stdin.readline().strip()
+            if PY3:
+                line = self.stdin.readline().strip().decode('utf8')
+            else:
+                line = self.stdin.readline().strip()
             self.stderr.write('ENV LINE: ')
             self.stderr.write(line)
             self.stderr.write('\n')
