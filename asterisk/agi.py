@@ -200,6 +200,8 @@ class AGI:
         elif code == 520:
             usage = [line]
             line = self.stdin.readline().strip()
+            if PY3:
+                if type(line) is bytes: line = line.decode('utf8')
             while line[:3] != '520':
                 usage.append(line)
                 line = self.stdin.readline().strip()
