@@ -16,6 +16,11 @@ pyst2: A Python Interface to Asterisk
 .. image:: https://github.com/rdegges/pyst2/raw/master/assets/snake-sketch.jpg
    :alt: Snake Sketch
 
+Project Documentation
+---------------------
+
+http://pyst2.readthedocs.io
+
 
 Meta
 ----
