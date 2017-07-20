@@ -670,6 +670,11 @@ class Manager(object):
         response = self.send_action(cdict)
         return response
 
+    def sipshowregistry(self):
+        cdict = {'Action': 'SIPShowregistry'}
+        response = self.send_action(cdict)
+        return response
+
     def reload(self, module):
         """ Reloads config for a given module """
 
