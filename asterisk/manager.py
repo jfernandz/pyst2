@@ -675,6 +675,11 @@ class Manager(object):
         response = self.send_action(cdict)
         return response
 
+    def iaxregistry(self):
+        cdict = {'Action': 'IAXregistry'}
+        response = self.send_action(cdict)
+        return response
+
     def reload(self, module):
         """ Reloads config for a given module """
 
