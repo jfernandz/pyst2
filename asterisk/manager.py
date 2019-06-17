@@ -575,7 +575,7 @@ class Manager(object):
 
         return response
 
-    def originate(self, channel, exten, context='', priority='', timeout='', application='', data='', caller_id='', async=False, earlymedia='false', account='', variables={}):
+    def originate(self, channel, exten, context='', priority='', timeout='', application='', data='', caller_id='', run_async=False, earlymedia='false', account='', variables={}):
         """Originate a call"""
 
         cdict = {'Action': 'Originate'}
@@ -593,7 +593,7 @@ class Manager(object):
             cdict['Data'] = data
         if caller_id:
             cdict['CallerID'] = caller_id
-        if async:
+        if run_async:
             cdict['Async'] = 'yes'
         if earlymedia:
             cdict['EarlyMedia'] = earlymedia
@@ -692,6 +692,34 @@ class Manager(object):
         response = self.send_action(cdict)
         return response
 
+    def dbdel(self, family, key):
+        cdict = {'Action': 'DBDel'}
+        cdict['Family'] = family
+        cdict['Key'] = key
+        response = self.send_action(cdict)
+        return response
+
+    def dbdeltree(self, family, key):
+        cdict = {'Action': 'DBDelTree'}
+        cdict['Family'] = family
+        cdict['Key'] = key
+        response = self.send_action(cdict)
+        return response
+
+    def dbget(self, family, key):
+        cdict = {'Action': 'DBGet'}
+        cdict['Family'] = family
+        cdict['Key'] = key
+        response = self.send_action(cdict)
+        return response
+
+    def dbput(self, family, key, val):
+        cdict = {'Action': 'DBPut'}
+        cdict['Family'] = family
+        cdict['Key'] = key
+        cdict['Val'] = val
+        response = self.send_action(cdict)
+        return response
 
 class ManagerException(Exception):
     pass
