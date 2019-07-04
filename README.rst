@@ -30,13 +30,11 @@ Meta
 - Site: http://www.rdegges.com
 - Status: *looking for maintainer*, active
 
-**NOTE**: This project is in need of an active maintainer.  I'm quite busy with
-other non-asterisk related projects in my personal time, so if you're a good
-Python programmer, and working with this library and Asterisk on a daily basis
--- please consider maintaining the project!  Contact me for more information:
-r@rdegges.com
-
-In the meantime, I'm happy to accept pull requests and cut releases as needed.
+**NOTE**: This project is now mantained by Francesco Rana. 
+Please be patient because I'm not used to the job yet, but I'll do my best.
+Many and infinite thanks to Randall Degges for his wonderful work. I'm actually using the
+library in some project of mine, so I'm more than happy to help and push it further if I can.
+I'm happy to accept pull requests and cut releases as needed.
 If you want to contribute to the project, please do!
 
 
