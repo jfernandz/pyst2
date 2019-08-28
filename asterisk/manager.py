@@ -303,7 +303,7 @@ class Manager(object):
         status = False
         wait_for_marker = False
         eolcount = 0
-        # loop while we are sill running and connected
+        # loop while we are still running and connected
         while self._running.isSet() and self._connected.isSet():
             try:
                 lines = []
@@ -456,7 +456,7 @@ class Manager(object):
                 if callback(ev, self):
                     break
 
-    def connect(self, host, port=5038):
+    def connect(self, host, port=5038, buffer_size=0):
         """Connect to the manager interface"""
 
         if self._connected.isSet():
@@ -472,7 +472,7 @@ class Manager(object):
             _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             _sock.connect((host, port))
             if PY3:
-                self._sock = _sock.makefile(mode='rwb', buffering=0)
+                self._sock = _sock.makefile(mode='rwb', buffering=buffer_size)
             else:
                 self._sock = _sock.makefile()
             _sock.close()
