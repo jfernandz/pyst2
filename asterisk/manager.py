@@ -466,6 +466,7 @@ class Manager(object):
         assert type(host) is str
 
         port = int(port)  # make sure port is an int
+        buffer_size = int(buffer_size)  # make sure buffer_siz is an int as well
 
         # create our socket and connect
         try:
