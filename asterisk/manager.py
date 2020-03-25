@@ -283,7 +283,9 @@ class Manager(object):
         # lock the socket and send our command
         try:
             self._sock.write(command.encode('utf8','ignore'))
-            self._sock.flush()
+            # Check if The socket is already closed. May happen after sending "Action: Logoff"
+            if not self._sock.closed:
+                self._sock.flush()
         except socket.error as e:
             raise ManagerSocketException(e.errno, e.strerror)
 
