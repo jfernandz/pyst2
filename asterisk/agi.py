@@ -424,7 +424,7 @@ class AGI:
 
     def say_datetime(self, seconds, escape_digits='', format='', zone=''):
         """agi.say_datetime(seconds, escape_digits='', format='', zone='') --> digit
-        Say a given date in the format specfied (see voicemail.conf), returning
+        Say a given date in the format specified (see voicemail.conf), returning
         early if any of the given DTMF digits are pressed.  The date should be
         in seconds since the UNIX Epoch (Jan 1, 1970 00:00:00).
         """
