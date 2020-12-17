@@ -458,7 +458,7 @@ class Manager(object):
                 if callback(ev, self):
                     break
 
-    def connect(self, host, port=5038, buffer_size=0):
+    def connect(self, host, port=5038, buffer_size=0, timeout=60):
         """Connect to the manager interface"""
 
         if self._connected.isSet():
@@ -473,6 +473,7 @@ class Manager(object):
         # create our socket and connect
         try:
             _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            _sock.settimeout(timeout)
             _sock.connect((host, port))
             if PY3:
                 self._sock = _sock.makefile(mode='rwb', buffering=buffer_size)
