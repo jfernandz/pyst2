@@ -139,11 +139,11 @@ class ManagerMsg(object):
         return hname in self.headers
 
     def get_header(self, hname, defval=None):
-        """Return the specfied header"""
+        """Return the specified header"""
         return self.headers.get(hname, defval)
 
     def __getitem__(self, hname):
-        """Return the specfied header"""
+        """Return the specified header"""
         return self.headers[hname]
 
     def __repr__(self):
@@ -154,7 +154,7 @@ class ManagerMsg(object):
 
 
 class Event(object):
-    """Manager interface Events, __init__ expects and 'Event' message"""
+    """Manager interface Events, __init__ expects a 'ManagerMsg' message"""
     def __init__(self, message):
 
         # store all of the event data
@@ -175,11 +175,11 @@ class Event(object):
         return hname in self.headers
 
     def get_header(self, hname, defval=None):
-        """Return the specfied header"""
+        """Return the specified header"""
         return self.headers.get(hname, defval)
 
     def __getitem__(self, hname):
-        """Return the specfied header"""
+        """Return the specified header"""
         return self.headers[hname]
 
     def __repr__(self):
@@ -377,7 +377,7 @@ class Manager(object):
 
     def register_event(self, event, function):
         """
-        Register a callback for the specfied event.
+        Register a callback for the specified event.
         If a callback function returns True, no more callbacks for that
         event will be executed.
         """
@@ -616,7 +616,7 @@ class Manager(object):
         return response
 
     def mailbox_status(self, mailbox):
-        """Get the status of the specfied mailbox"""
+        """Get the status of the specified mailbox"""
 
         cdict = {'Action': 'MailboxStatus'}
         cdict['Mailbox'] = mailbox
