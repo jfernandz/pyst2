@@ -511,7 +511,11 @@ class Manager(object):
 
         # if we are still running, logout
         if self._running.isSet() and self._connected.isSet():
-            self.logoff()
+            try:
+                self.logoff()
+            except ManagerSocketException:
+                self._connected.clear()
+                pass
 
         if self._running.isSet():
             # put None in the message_queue to kill our threads
