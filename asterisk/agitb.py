@@ -204,9 +204,9 @@ class Hook:
                 self.file.write(doc + '\n')
 
         if self.agi:
-            self.agi.verbose('A problem occured in a python script', 4)
+            self.agi.verbose('A problem occurred in a python script', 4)
         else:
-            self.file.write('A problem occured in a python script\n')
+            self.file.write('A problem occurred in a python script\n')
 
         if self.logdir is not None:
             import os

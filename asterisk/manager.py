@@ -54,7 +54,7 @@ Example
 
 Remember all header, response, and event names are case sensitive.
 
-Not all manager actions are implmented as of yet, feel free to add them
+Not all manager actions are implemented as of yet, feel free to add them
 and submit patches.
 
 Specification
@@ -90,7 +90,7 @@ class ManagerMsg(object):
         # 'dialplan show something') contains a \n\r\n sequence in the
         # middle of output. We hope this happens only *once* during a
         # misbehaved command *and* the command ends with --END COMMAND--
-        # in that case we return an Event.  Otherwise we asume it is
+        # in that case we return an Event.  Otherwise we assume it is
         # from a misbehaving command not returning a proper header (e.g.
         # IAXnetstats in Asterisk 1.4.X)
         # A better solution is probably to retain some knowledge of
@@ -113,7 +113,7 @@ class ManagerMsg(object):
         data = []
         for n, line in enumerate(response):
             # all valid header lines end in \r\n in Asterisk<=13
-            # and all valid headers lines in Asterisk>13 dont's starts
+            # and all valid headers lines in Asterisk>13 dont's start
             # with 'Output:'
             if not line.endswith('\r\n') or line.startswith('Output:'):
                 data.extend(response[n:])
@@ -407,11 +407,11 @@ class Manager(object):
     def message_loop(self):
         """
         The method for the event thread.
-        This actually recieves all types of messages and places them
+        This actually receives all types of messages and places them
         in the proper queues.
         """
 
-        # start a thread to recieve data
+        # start a thread to receive data
         t = threading.Thread(target=self._receive_data)
         t.setDaemon(True)
         t.start()
@@ -529,7 +529,7 @@ class Manager(object):
 # Manager actions
 
     def login(self, username, secret):
-        """Login to the manager, throws ManagerAuthException when login falis"""
+        """Login to the manager, throws ManagerAuthException when login fails"""
 
         cdict = {'Action': 'Login'}
         cdict['Username'] = username
