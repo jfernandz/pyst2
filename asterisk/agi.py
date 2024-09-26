@@ -129,9 +129,9 @@ class AGI:
         if isinstance(string, float):
           string = str(string)
         if PY3:
-            return ''.join(['"', string, '"'])
+            return ''.join(['"', string.replace('"', '\\"'), '"'])
         else:
-            return ''.join(['"', string.encode('utf8', 'ignore'), '"'])
+            return ''.join(['"', string.replace('"', '\\"').encode('utf8', 'ignore'), '"'])
 
     def _handle_sighup(self, signum, frame):
         """Handle the SIGHUP signal"""
