@@ -163,7 +163,7 @@ class AGI:
         if command[-1] != '\n':
             command += '\n'
         self.stderr.write('    COMMAND: %s' % command)
-        self.stdout.write(command)
+        self.stdout.write(command.encode('utf8'))
         self.stdout.flush()
 
     def get_result(self, stdin=sys.stdin):
