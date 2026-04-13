@@ -343,9 +343,10 @@ class Manager(object):
                             break
                         # ignore empty lines at start
                         continue
-                    # If the user executed the status command, it's a special
+                    # If the user executed the status command or other
+                    # command with multiline response, it's a special
                     # case, so we need to look for a marker.
-                    if 'status will follow' in line:
+                    if 'EventList: start' in line:
                         status = True
                         wait_for_marker = True
                     lines.append(line)
@@ -363,8 +364,8 @@ class Manager(object):
                     if multiline and (line.startswith('--END COMMAND--') or line.strip().endswith('--END COMMAND--')):
                         wait_for_marker = False
                         multiline = False
-                    # same when seeing end of status response
-                    if status and 'StatusComplete' in line:
+                    # same when seeing end of status of multiline response
+                    if status and 'EventList: Complete' in line:
                         wait_for_marker = False
                         status = False
                     if not self._connected.isSet():
