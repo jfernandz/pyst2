@@ -92,6 +92,8 @@ directly on the host where Asterisk is running. Since Asterisk doesn't
 run on windows platforms (and probably never will) the agi part of the
 package can only be run on Asterisk platforms.
 
+Examples are available in the `examples/` directory.
+
 FastAGI
 -------
 

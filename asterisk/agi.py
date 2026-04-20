@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set et sw=4 fenc=utf-8: 
+# vim: set et sw=4 fenc=utf-8:
 """
 .. module:: agi
-   :synopsis: This module contains functions and classes to implment AGI scripts in python. 
-   
+   :synopsis: This module contains functions and classes to implement AGI scripts in python.
+
 pyvr
 
 {'agi_callerid' : 'mars.putland.int',
@@ -52,7 +52,7 @@ class AGIAppError(AGIError):
     pass
 
 # there are several different types of hangups we can detect
-# they all are derrived from AGIHangup
+# they all are derived from AGIHangup
 
 
 class AGIHangup(AGIAppError):
@@ -82,10 +82,10 @@ class AGIUsageError(AGIError):
 class AGIInvalidCommand(AGIError):
     pass
 
-        
+
 class AGI:
     """
-    This class encapsulates communication between Asterisk an a python script.
+    This class encapsulates communication between Asterisk and a python script.
     It handles encoding commands to Asterisk and parsing responses from
     Asterisk.
     """
@@ -138,7 +138,7 @@ class AGI:
         self._got_sighup = True
 
     def test_hangup(self):
-        """This function throws AGIHangup if we have recieved a SIGHUP"""
+        """This function throws AGIHangup if we have received a SIGHUP"""
         if self._got_sighup:
             raise AGISIGHUPHangup("Received SIGHUP from Asterisk")
 
@@ -185,7 +185,7 @@ class AGI:
 
                 # If user hangs up... we get 'hangup' in the data
                 if data == 'hangup':
-                    raise AGIResultHangup("User hungup during execution")
+                    raise AGIResultHangup("User hung up during execution")
 
                 if key == 'result' and value == '-1':
                     raise AGIAppError("Error executing application, or hangup")
@@ -225,7 +225,7 @@ class AGI:
         """agi.wait_for_digit(timeout=DEFAULT_TIMEOUT) --> digit
         Waits for up to 'timeout' milliseconds for a channel to receive a DTMF
         digit.  Returns digit dialed
-        Throws AGIError on channel falure
+        Throws AGIError on channel failure
         """
         res = self.execute('WAIT FOR DIGIT', timeout)['result'][0]
         if res == '0':
@@ -320,7 +320,7 @@ class AGI:
         """
         res = self.execute('SEND IMAGE', filename)['result'][0]
         if res != '0':
-            raise AGIAppError('Channel falure on channel %s' %
+            raise AGIAppError('Channel failure on channel %s' %
                               self.env.get('agi_channel', 'UNKNOWN'))
 
     def say_digits(self, digits, escape_digits=''):
@@ -656,7 +656,7 @@ class AGI:
             family), self._quote(key), self._quote(value))
         res, value = result['result']
         if res == '0':
-            raise AGIDBError('Unable to put vaule in databale: family=%s, key=%s, value=%s' % (family, key, value))
+            raise AGIDBError('Unable to put value in database: family=%s, key=%s, value=%s' % (family, key, value))
 
     def database_del(self, family, key):
         """agi.database_del(family, key) --> None
