@@ -468,7 +468,7 @@ class Manager(object):
                 if callback(ev, self):
                     break
 
-    def connect(self, host, port=5038, buffer_size=0):
+    def connect(self, host, port=5038, buffer_size=0, timeout: int=None):
         """Connect to the manager interface"""
 
         if self._connected.isSet():
@@ -483,6 +483,14 @@ class Manager(object):
         # create our socket and connect
         try:
             _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # Set a socket timeout if specified to avoid indefinite blocking during connection attempts.
+            # If no timeout is provided, default system behavior (no timeout) will be used.
+            if timeout is not None:
+                try:
+                    _sock.settimeout(timeout)
+                except AttributeError:
+                    # invalid timeout
+                    raise ManagerSocketException(0, 'Invalid timeout value, must be an int')
             _sock.connect((host, port))
             if PY3:
                 self._sock = _sock.makefile(mode='rwb', buffering=buffer_size)
